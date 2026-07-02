@@ -1,0 +1,3324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Swift, Unwrapped — Learn Swift Visually</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg: #15161e;
+  --bg-soft: #1b1c27;
+  --surface: #20222f;
+  --surface-2: #262838;
+  --border: #34374a;
+  --text: #e9e7e2;
+  --text-dim: #9b9cae;
+  --orange: #fa7343;
+  --orange-dim: #c95a32;
+  --mint: #6ee7b7;
+  --violet: #b9a3ff;
+  --rose: #ff8fa3;
+  --radius: 10px;
+}
+*{box-sizing:border-box;}
+html{ height:100%; }
+html,body{margin:0;padding:0;}
+body{
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  height:100%;
+  overflow:hidden;
+}
+.skip-link{position:absolute;left:-999px;}
+.skip-link:focus{left:8px;top:8px;background:var(--orange);color:#15161e;padding:6px 10px;border-radius:6px;z-index:999;}
+
+/* The scrim is a click-outside overlay for the mobile drawer. It must
+   NEVER participate in .app's grid flow, on any screen size, or it
+   silently eats a grid cell and pushes the sidebar/main out of place. */
+.scrim{
+  position:fixed; inset:0;
+  background:rgba(0,0,0,.5);
+  z-index:50;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .2s;
+}
+.scrim.show{ opacity:1; pointer-events:auto; }
+
+/* ---------- App shell ---------- */
+.app{
+  display:grid;
+  grid-template-columns: 300px 1fr;
+  grid-template-rows: 100%;
+  height:100%;
+}
+.sidebar{ grid-column: 1; }
+.main{ grid-column: 2; }
+@media (max-width: 860px){
+  .app{ grid-template-columns: 1fr; }
+  .sidebar{
+    grid-column: 1;
+    position:fixed; inset:0 30% 0 0; z-index:55;
+    transform:translateX(-105%);
+    transition: transform .28s ease;
+    width:78vw; max-width:320px;
+  }
+  .sidebar.open{ transform:translateX(0); }
+  .menu-toggle{display:inline-flex !important;}
+}
+
+/* ---------- Sidebar (outline) ---------- */
+.sidebar{
+  background: var(--bg-soft);
+  border-right:1px solid var(--border);
+  display:flex;
+  flex-direction:column;
+  height:100%;
+}
+.brand{
+  padding:22px 20px 16px;
+  border-bottom:1px solid var(--border);
+}
+.brand .mark{
+  font-family:'Fraunces', serif;
+  font-weight:600;
+  font-size:21px;
+  letter-spacing:-0.01em;
+  display:flex; align-items:center; gap:9px;
+}
+.brand .mark .dot{
+  width:9px;height:9px;border-radius:50%;
+  background: var(--orange);
+  box-shadow:0 0 0 3px rgba(250,115,67,.18);
+}
+.brand .tag{
+  font-size:12px; color:var(--text-dim); margin-top:5px;
+  font-family:'JetBrains Mono', monospace;
+}
+nav.outline{
+  flex:1;
+  min-height:0;
+  overflow-y:auto;
+  padding:10px 10px 24px;
+}
+nav.outline::-webkit-scrollbar{width:8px;}
+nav.outline::-webkit-scrollbar-thumb{background:var(--surface-2);border-radius:8px;}
+
+.menu-group{ margin-bottom:2px; }
+.menu-btn{
+  width:100%;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  background:none;
+  border:none;
+  color:var(--text);
+  font-family:'Inter';
+  font-size:14px;
+  font-weight:600;
+  padding:10px 10px;
+  border-radius:8px;
+  cursor:pointer;
+  text-align:left;
+}
+.menu-btn:hover{ background: var(--surface); }
+.menu-btn .chev{
+  margin-left:auto;
+  transition: transform .2s ease;
+  color: var(--text-dim);
+  font-size:11px;
+}
+.menu-btn[aria-expanded="true"] .chev{ transform: rotate(90deg); color:var(--orange); }
+.menu-btn .num{
+  font-family:'JetBrains Mono';
+  font-size:11px;
+  color: var(--orange);
+  width:20px;
+  flex:none;
+}
+.submenu-list{
+  list-style:none;
+  margin:2px 0 8px 0;
+  padding:0 0 0 30px;
+  display:none;
+  border-left:1px solid var(--border);
+  margin-left:20px;
+}
+.submenu-list.open{ display:block; }
+.submenu-list li{ margin:1px 0; }
+.sub-btn{
+  width:100%;
+  background:none;
+  border:none;
+  color: var(--text-dim);
+  font-size:13.5px;
+  text-align:left;
+  padding:8px 10px;
+  border-radius:7px;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-family:'Inter';
+}
+.sub-btn:hover{ background:var(--surface); color:var(--text); }
+.sub-btn.active{
+  background: rgba(250,115,67,.12);
+  color: var(--orange);
+  font-weight:600;
+}
+.sub-btn .pip{
+  width:5px;height:5px;border-radius:50%;
+  background: var(--text-dim);
+  flex:none;
+}
+.sub-btn.active .pip{ background: var(--orange); }
+
+.sidebar-footer{
+  padding:12px 20px;
+  border-top:1px solid var(--border);
+  font-size:11.5px;
+  color:var(--text-dim);
+  font-family:'JetBrains Mono', monospace;
+}
+
+/* ---------- Main / details ---------- */
+.main{
+  height:100%;
+  min-height:0;
+  overflow-y:auto;
+  position:relative;
+}
+.topbar{
+  position:sticky; top:0; z-index:10;
+  display:flex; align-items:center; gap:12px;
+  padding:14px 28px;
+  background: linear-gradient(to bottom, var(--bg) 70%, transparent);
+  backdrop-filter: blur(6px);
+}
+.menu-toggle{
+  display:none;
+  align-items:center; justify-content:center;
+  width:34px;height:34px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:8px;
+  color:var(--text);
+  cursor:pointer;
+  flex:none;
+}
+.crumbs{
+  font-family:'JetBrains Mono', monospace;
+  font-size:12px;
+  color:var(--text-dim);
+}
+.crumbs b{ color: var(--orange); font-weight:600; }
+
+.content{
+  max-width:780px;
+  margin:0 auto;
+  padding:18px 28px 90px;
+}
+
+/* ---------- Large screen scaling ---------- */
+@media (min-width: 1100px){
+  .app{ grid-template-columns: 320px 1fr; }
+  .content{ max-width:860px; padding:32px 40px 110px; }
+  .content h1{ font-size:44px; }
+  .topbar{ padding:18px 40px; }
+}
+@media (min-width: 1500px){
+  .app{ grid-template-columns: 340px 1fr; }
+  .content{ max-width:920px; padding:44px 56px 130px; }
+}
+@media (min-width: 1900px){
+  /* On ultra-wide screens, cap the whole app so the sidebar + content
+     don't stretch into a thin strip with acres of empty page around it */
+  body{ display:flex; justify-content:center; background: var(--bg-soft); }
+  .app{ max-width:1760px; width:100%; box-shadow:0 0 0 1px var(--border); }
+}
+.eyebrow{
+  font-family:'JetBrains Mono', monospace;
+  color: var(--orange);
+  font-size:12.5px;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+  margin-bottom:10px;
+}
+.content h1{
+  font-family:'Fraunces', serif;
+  font-weight:600;
+  font-size:38px;
+  line-height:1.08;
+  margin:0 0 14px;
+  letter-spacing:-0.01em;
+}
+.lede{
+  font-size:16.5px;
+  color:#c8c6d8;
+  line-height:1.65;
+  margin:0 0 26px;
+  max-width:640px;
+}
+.content h2{
+  font-family:'Fraunces', serif;
+  font-size:20px;
+  font-weight:600;
+  margin:34px 0 12px;
+  color: var(--text);
+}
+.content p{
+  font-size:15px;
+  line-height:1.7;
+  color:#c8c6d8;
+  margin:0 0 14px;
+}
+.content code.inline{
+  font-family:'JetBrains Mono', monospace;
+  background: var(--surface-2);
+  padding:2px 6px;
+  border-radius:5px;
+  font-size:13px;
+  color: var(--mint);
+}
+
+/* code block */
+.codeblock{
+  background: #10111a;
+  border:1px solid var(--border);
+  border-radius: var(--radius);
+  overflow:hidden;
+  margin:16px 0 22px;
+}
+.codeblock .cb-head{
+  display:flex; align-items:center; gap:8px;
+  padding:9px 14px;
+  border-bottom:1px solid var(--border);
+  background: var(--surface);
+}
+.cb-head .dot2{ width:9px;height:9px;border-radius:50%; }
+.cb-head .r{ background:#ff6166; } .cb-head .y{ background:#ffd75e; } .cb-head .g{ background:#52d273; }
+.cb-head .fname{
+  margin-left:6px;
+  font-family:'JetBrains Mono', monospace;
+  font-size:11.5px;
+  color: var(--text-dim);
+}
+.codeblock pre{
+  margin:0; padding:16px 18px;
+  overflow-x:auto;
+  font-family:'JetBrains Mono', monospace;
+  font-size:13.5px;
+  line-height:1.65;
+}
+.tk-kw{ color: var(--orange); }
+.tk-type{ color: var(--violet); }
+.tk-str{ color: var(--mint); }
+.tk-com{ color: var(--text-dim); font-style:italic; }
+.tk-num{ color: var(--rose); }
+.tk-fn{ color: #7fb6ff; }
+
+/* interactive panel */
+.lab{
+  border:1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  margin:18px 0 30px;
+  overflow:hidden;
+}
+.lab-head{
+  display:flex; align-items:center; gap:8px;
+  padding:12px 16px;
+  border-bottom:1px solid var(--border);
+  background: var(--surface-2);
+}
+.lab-head .ic{ color: var(--mint); font-size:14px; }
+.lab-head .lab-title{
+  font-weight:600; font-size:13.5px;
+  font-family:'Inter';
+}
+.lab-head .lab-hint{
+  margin-left:auto;
+  font-size:11.5px;
+  color:var(--text-dim);
+  font-family:'JetBrains Mono', monospace;
+}
+.lab-body{ padding:18px 18px 20px; }
+.lab-controls{
+  display:flex; flex-wrap:wrap; gap:10px 16px;
+  margin-bottom:16px;
+}
+.ctl{
+  display:flex; flex-direction:column; gap:6px;
+}
+.ctl label{
+  font-size:11.5px; color:var(--text-dim);
+  font-family:'JetBrains Mono', monospace;
+  text-transform:uppercase; letter-spacing:.03em;
+}
+.ctl input[type="text"], .ctl input[type="number"], .ctl select{
+  background: var(--bg-soft);
+  border:1px solid var(--border);
+  color: var(--text);
+  padding:8px 10px;
+  border-radius:7px;
+  font-family:'JetBrains Mono', monospace;
+  font-size:13px;
+  min-width:120px;
+}
+.ctl input[type="range"]{ width:160px; accent-color: var(--orange); }
+.seg{
+  display:inline-flex;
+  background: var(--bg-soft);
+  border:1px solid var(--border);
+  border-radius:8px;
+  overflow:hidden;
+}
+.seg button{
+  border:none; background:none; color:var(--text-dim);
+  padding:8px 14px; font-size:13px; cursor:pointer;
+  font-family:'Inter'; font-weight:600;
+}
+.seg button.active{ background: var(--orange); color:#1a1106; }
+.btn{
+  background: var(--orange);
+  color:#1a1106;
+  border:none;
+  padding:9px 16px;
+  border-radius:7px;
+  font-weight:700;
+  font-size:13px;
+  cursor:pointer;
+  font-family:'Inter';
+}
+.btn.secondary{
+  background: var(--surface-2);
+  color: var(--text);
+  border:1px solid var(--border);
+}
+.btn:active{ transform: translateY(1px); }
+.console{
+  background:#0d0e15;
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:14px 16px;
+  font-family:'JetBrains Mono', monospace;
+  font-size:13px;
+  min-height:54px;
+  white-space:pre-wrap;
+  line-height:1.6;
+}
+.console .arrow{ color: var(--text-dim); margin-right:8px;}
+.console .ok{ color: var(--mint); }
+.console .err{ color: var(--rose); }
+.console .info{ color: var(--violet); }
+.tape{
+  display:flex; gap:8px; flex-wrap:wrap; margin:10px 0;
+}
+.tape .cell{
+  background: var(--bg-soft);
+  border:1px solid var(--border);
+  border-radius:7px;
+  padding:7px 11px;
+  font-family:'JetBrains Mono', monospace;
+  font-size:12.5px;
+  color: var(--text-dim);
+  transition: all .15s;
+}
+.tape .cell.hit{
+  border-color: var(--orange);
+  color: var(--orange);
+  background: rgba(250,115,67,.1);
+}
+.kv-row{ display:flex; gap:8px; align-items:center; margin-bottom:8px;}
+.pill{
+  display:inline-block; padding:3px 9px; border-radius:20px;
+  font-size:11px; font-family:'JetBrains Mono', monospace;
+  background: var(--surface-2); color: var(--text-dim); border:1px solid var(--border);
+}
+.pill.mint{ color:var(--mint); border-color: rgba(110,231,183,.3); }
+.pill.rose{ color:var(--rose); border-color: rgba(255,143,163,.3); }
+
+.rule{
+  display:flex; gap:12px; align-items:flex-start;
+  background: var(--surface); border:1px solid var(--border); border-left:3px solid var(--violet);
+  border-radius: var(--radius);
+  padding:14px 16px; margin:18px 0;
+}
+.rule .rule-ic{
+  font-family:'Fraunces', serif; font-weight:600; font-size:13px;
+  color: var(--violet); white-space:nowrap; letter-spacing:.02em;
+  padding-top:1px;
+}
+.rule p{ margin:0; }
+.rule strong{ color: var(--text); }
+
+.two-col{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+@media (max-width:620px){ .two-col{ grid-template-columns:1fr; } }
+@media (min-width:1100px){
+  .lab-body{ padding:22px 24px 24px; }
+  .lab-controls{ gap:14px 22px; }
+}
+.box-card{
+  border:1px solid var(--border); border-radius:9px; padding:14px;
+  background: var(--bg-soft);
+}
+.box-card h4{
+  margin:0 0 8px; font-size:12.5px; text-transform:uppercase; letter-spacing:.04em;
+  font-family:'JetBrains Mono', monospace; color: var(--text-dim);
+}
+.box-card .val{ font-family:'JetBrains Mono', monospace; font-size:14px; color:var(--text); }
+
+.nav-footer{
+  display:flex; justify-content:space-between; gap:12px;
+  margin-top:40px; padding-top:20px; border-top:1px solid var(--border);
+}
+.nf-link{
+  display:flex; flex-direction:column; gap:3px;
+  padding:12px 16px; border:1px solid var(--border); border-radius:9px;
+  cursor:pointer; max-width:48%;
+  background: var(--surface);
+}
+.nf-link:hover{ border-color: var(--orange); }
+.nf-link .nf-dir{ font-size:11px; color:var(--text-dim); font-family:'JetBrains Mono', monospace; }
+.nf-link .nf-title{ font-size:13.5px; font-weight:600; }
+.nf-link.next{ text-align:right; margin-left:auto; }
+</style>
+</head>
+<body>
+<a class="skip-link" href="#maincontent">Skip to content</a>
+
+<div class="app" id="app">
+  <div class="scrim" id="scrim"></div>
+  <aside class="sidebar" id="sidebar" aria-label="Course outline">
+    <div class="brand">
+      <div class="mark"><span class="dot"></span> Swift, Unwrapped</div>
+      <div class="tag">// learn Swift by poking at it</div>
+    </div>
+    <nav class="outline" id="outline"></nav>
+    <div class="sidebar-footer">12 lessons · 6 chapters</div>
+  </aside>
+
+  <main class="main" id="maincontent">
+    <div class="topbar">
+      <button class="menu-toggle" id="menuToggle" aria-label="Open outline">☰</button>
+      <div class="crumbs" id="crumbs"></div>
+    </div>
+    <div class="content" id="content"></div>
+  </main>
+</div>
+
+<script>
+/* ======================= CONTENT DATA ======================= */
+const course = [
+  {
+    id:"basics", title:"The Basics", icon:"01",
+    subs:[
+      {id:"vars", title:"var vs let"},
+      {id:"types", title:"Types & Inference"},
+      {id:"optionals", title:"Optionals"},
+      {id:"opsio", title:"Operators, I/O & Unwrapping"},
+    ]
+  },
+  {
+    id:"flow", title:"Control Flow", icon:"02",
+    subs:[
+      {id:"ifswitch", title:"if & switch"},
+      {id:"loops", title:"Loops"},
+      {id:"guardternary", title:"guard, Ternary & Loop Control"},
+    ]
+  },
+  {
+    id:"funcs", title:"Functions & Closures", icon:"03",
+    subs:[
+      {id:"functions", title:"Functions"},
+      {id:"closures", title:"Closures"},
+      {id:"closurescapture", title:"Capturing, Escaping & Autoclosures"},
+      {id:"errorhandling", title:"Error Handling"},
+      {id:"paramshof", title:"Parameters, Closures & Higher-Order Funcs"},
+    ]
+  },
+  {
+    id:"collections", title:"Collections", icon:"04",
+    subs:[
+      {id:"arrays", title:"Arrays"},
+      {id:"dicts", title:"Dictionaries"},
+      {id:"generics", title:"Generics"},
+      {id:"sets", title:"Sets & Transformations"},
+    ]
+  },
+  {
+    id:"oop", title:"Structs, Classes & Protocols", icon:"05",
+    subs:[
+      {id:"structclass", title:"Struct vs Class"},
+      {id:"protocols", title:"Protocols"},
+      {id:"arc", title:"ARC & Memory Management"},
+      {id:"extensionsaccess", title:"Extensions & Access Control"},
+      {id:"propsmethods", title:"Properties, Methods & Initializers"},
+    ]
+  },
+  {
+    id:"enums", title:"Enumerations", icon:"06",
+    subs:[
+      {id:"enumbasics", title:"Enums & switch"},
+      {id:"enumadvanced", title:"Raw & Associated Values"},
+    ]
+  },
+  {
+    id:"concurrency", title:"Concurrency", icon:"07",
+    subs:[
+      {id:"asyncawait", title:"async/await"},
+      {id:"actors", title:"Actors"},
+      {id:"taskgroups", title:"Task Groups, MainActor & Async Sequences"},
+    ]
+  },
+  {
+    id:"combine", title:"Combine", icon:"08",
+    subs:[
+      {id:"pubsub", title:"Publishers & Subscribers"},
+      {id:"operators", title:"Operators"},
+    ]
+  },
+  {
+    id:"coredata", title:"Core Data", icon:"09",
+    subs:[
+      {id:"datamodel", title:"Model & Fetching"},
+      {id:"savingrels", title:"Saving & Relationships"},
+    ]
+  },
+  {
+    id:"architecture", title:"Architecture", icon:"10",
+    subs:[
+      {id:"mvcvsmvvm", title:"MVC vs MVVM"},
+      {id:"mvvmpractice", title:"MVVM in Practice"},
+    ]
+  },
+  {
+    id:"designprinciples", title:"Design Principles", icon:"11",
+    subs:[
+      {id:"solid", title:"SOLID Principles"},
+      {id:"pod", title:"Protocol-Oriented Design"},
+    ]
+  },
+  {
+    id:"designpatterns", title:"Design Patterns", icon:"12",
+    subs:[
+      {id:"singletonfactory", title:"Singleton & Factory"},
+      {id:"observerdelegate", title:"Observer & Delegate"},
+      {id:"coordinatordi", title:"Coordinator & Dependency Injection"},
+    ]
+  },
+  {
+    id:"strings", title:"Strings", icon:"13",
+    subs:[
+      {id:"stringsdeep", title:"Strings, Indices & Regex"},
+    ]
+  },
+  {
+    id:"functional", title:"Functional Programming", icon:"14",
+    subs:[
+      {id:"funcprog", title:"map, filter, reduce & friends"},
+    ]
+  },
+  {
+    id:"oopfoundations", title:"Object-Oriented Programming", icon:"15",
+    subs:[
+      {id:"inheritance", title:"Inheritance, Polymorphism & Static Members"},
+    ]
+  },
+  {
+    id:"propsflow", title:"Property Features & Advanced Flow", icon:"16",
+    subs:[
+      {id:"propflow", title:"Observers, Lazy, defer & Pattern Matching"},
+    ]
+  },
+  {
+    id:"netpersist", title:"Networking & Persistence", icon:"17",
+    subs:[
+      {id:"networking", title:"URLSession, Codable & Local Storage"},
+    ]
+  },
+  {
+    id:"testingtools", title:"Testing & Tooling", icon:"18",
+    subs:[
+      {id:"testingspm", title:"XCTest & Swift Package Manager"},
+    ]
+  },
+  {
+    id:"swiftui", title:"SwiftUI Essentials", icon:"19",
+    subs:[
+      {id:"swiftuibasics", title:"Views, State, Bindings & Navigation"},
+    ]
+  },
+  {
+    id:"advancedswift", title:"Advanced Swift", icon:"20",
+    subs:[
+      {id:"advancedgrab", title:"Opaque Types, Key Paths, Macros & More"},
+    ]
+  },
+  {
+    id:"resultbuilders", title:"Result Builders", icon:"21",
+    subs:[
+      {id:"resultbuilderbasics", title:"@resultBuilder & SwiftUI's DSL"},
+    ]
+  },
+  {
+    id:"performance", title:"Performance", icon:"22",
+    subs:[
+      {id:"performancebasics", title:"Value Semantics, COW & Profiling"},
+    ]
+  },
+];
+
+// Flatten for prev/next navigation
+const flat = [];
+course.forEach(m => m.subs.forEach(s => flat.push({menu:m, sub:s})));
+
+/* ======================= RENDER OUTLINE ======================= */
+const outlineEl = document.getElementById("outline");
+course.forEach((menu, mi) => {
+  const group = document.createElement("div");
+  group.className = "menu-group";
+
+  const btn = document.createElement("button");
+  btn.className = "menu-btn";
+  btn.setAttribute("aria-expanded", mi===0 ? "true" : "false");
+  btn.innerHTML = `<span class="num">${menu.icon}</span><span>${menu.title}</span><span class="chev">▶</span>`;
+
+  const list = document.createElement("ul");
+  list.className = "submenu-list" + (mi===0 ? " open" : "");
+  menu.subs.forEach(sub => {
+    const li = document.createElement("li");
+    const sbtn = document.createElement("button");
+    sbtn.className = "sub-btn";
+    sbtn.dataset.menu = menu.id;
+    sbtn.dataset.sub = sub.id;
+    sbtn.innerHTML = `<span class="pip"></span>${sub.title}`;
+    sbtn.addEventListener("click", () => selectLesson(menu.id, sub.id));
+    li.appendChild(sbtn);
+    list.appendChild(li);
+  });
+
+  btn.addEventListener("click", () => {
+    const isOpen = list.classList.contains("open");
+    list.classList.toggle("open", !isOpen);
+    btn.setAttribute("aria-expanded", String(!isOpen));
+  });
+
+  group.appendChild(btn);
+  group.appendChild(list);
+  outlineEl.appendChild(group);
+});
+
+function setActiveSub(menuId, subId){
+  document.querySelectorAll(".sub-btn").forEach(b=>{
+    b.classList.toggle("active", b.dataset.menu===menuId && b.dataset.sub===subId);
+  });
+  document.querySelectorAll(".menu-group").forEach(g=>{
+    const list = g.querySelector(".submenu-list");
+    const hasActive = list.querySelector(".sub-btn.active");
+    if(hasActive){
+      list.classList.add("open");
+      g.querySelector(".menu-btn").setAttribute("aria-expanded","true");
+    }
+  });
+}
+
+/* ======================= MOBILE TOGGLE ======================= */
+const sidebar = document.getElementById("sidebar");
+const scrim = document.getElementById("scrim");
+document.getElementById("menuToggle").addEventListener("click", ()=>{
+  sidebar.classList.add("open"); scrim.classList.add("show");
+});
+scrim.addEventListener("click", ()=>{
+  sidebar.classList.remove("open"); scrim.classList.remove("show");
+});
+
+/* ======================= LESSON SELECTION ======================= */
+function selectLesson(menuId, subId){
+  setActiveSub(menuId, subId);
+  renderLesson(menuId, subId);
+  document.getElementById("content").scrollIntoView({block:"start"});
+  document.querySelector(".main").scrollTo(0,0);
+  sidebar.classList.remove("open"); scrim.classList.remove("show");
+}
+
+function renderLesson(menuId, subId){
+  const menu = course.find(m=>m.id===menuId);
+  const idx = flat.findIndex(f=>f.menu.id===menuId && f.sub.id===subId);
+  document.getElementById("crumbs").innerHTML = `${menu.title} <span style="color:var(--text-dim)">/</span> <b>${flat[idx].sub.title}</b>`;
+
+  const content = document.getElementById("content");
+  content.innerHTML = lessonHTML(subId);
+  content.appendChild(buildNavFooter(idx));
+  initInteractive(subId);
+}
+
+function buildNavFooter(idx){
+  const wrap = document.createElement("div");
+  wrap.className = "nav-footer";
+  const prev = flat[idx-1], next = flat[idx+1];
+  if(prev){
+    const d = document.createElement("div");
+    d.className = "nf-link prev";
+    d.innerHTML = `<span class="nf-dir">← Previous</span><span class="nf-title">${prev.sub.title}</span>`;
+    d.addEventListener("click", ()=>selectLesson(prev.menu.id, prev.sub.id));
+    wrap.appendChild(d);
+  } else { wrap.appendChild(document.createElement("div")); }
+  if(next){
+    const d = document.createElement("div");
+    d.className = "nf-link next";
+    d.innerHTML = `<span class="nf-dir">Next →</span><span class="nf-title">${next.sub.title}</span>`;
+    d.addEventListener("click", ()=>selectLesson(next.menu.id, next.sub.id));
+    wrap.appendChild(d);
+  }
+  return wrap;
+}
+
+/* ======================= LESSON CONTENT (static HTML per lesson) ======================= */
+function lessonHTML(id){
+  const T = LESSON_TEXT[id];
+  return `
+    <div class="eyebrow">${T.eyebrow}</div>
+    <h1>${T.title}</h1>
+    <p class="lede">${T.lede}</p>
+    ${T.body}
+  `;
+}
+
+const LESSON_TEXT = {
+  vars: {
+    eyebrow:"Chapter 01 · The Basics", title:"var vs let",
+    lede:"Swift makes you decide, up front, whether a value can ever change. That one keyword prevents entire categories of bugs before you even run the code.",
+    body:`
+      <h2>Two boxes, two promises</h2>
+      <p><code class="inline">let</code> creates a constant — write a value in once, and the box is sealed. <code class="inline">var</code> creates a variable — the box stays open, and you can put a new value in later.</p>
+      <div class="codeblock"><div class="cb-head"><span class="dot2 r"></span><span class="dot2 y"></span><span class="dot2 g"></span><span class="fname">Variables.swift</span></div>
+      <pre><span class="tk-kw">let</span> swiftVersion = <span class="tk-str">"6.0"</span>   <span class="tk-com">// fixed forever</span>
+<span class="tk-kw">var</span> coffeeCount = <span class="tk-num">1</span>        <span class="tk-com">// can change</span>
+coffeeCount = <span class="tk-num">2</span>             <span class="tk-com">// fine</span>
+swiftVersion = <span class="tk-str">"7.0"</span>        <span class="tk-com">// ❌ compile error</span></pre></div>
+      <p>Swift's compiler enforces this at compile time, not at runtime — so a broken assumption is caught before your app ever ships, not when a user hits it in the wild.</p>
+      <h2>Try sealing and unsealing a box</h2>
+      <div class="lab" id="lab-vars">
+        <div class="lab-head"><span class="ic">▣</span><span class="lab-title">Reassignment sandbox</span><span class="lab-hint">no install needed</span></div>
+        <div class="lab-body">
+          <div class="lab-controls">
+            <div class="ctl"><label>Declared with</label>
+              <div class="seg" id="vars-seg">
+                <button data-v="let" class="active">let</button>
+                <button data-v="var">var</button>
+              </div>
+            </div>
+            <div class="ctl"><label>New value to assign</label>
+              <input type="text" id="vars-input" value="2" />
+            </div>
+            <div class="ctl" style="justify-content:flex-end;"><button class="btn" id="vars-run">Assign →</button></div>
+          </div>
+          <div class="console" id="vars-console"><span class="arrow">›</span><span class="info">coffeeCount = 1</span></div>
+        </div>
+      </div>
+      <p>Notice: as soon as you switch to <code class="inline">let</code>, that second assignment stops compiling entirely — Swift won't even let you run it.</p>
+    `
+  },
+
+  types: {
+    eyebrow:"Chapter 01 · The Basics", title:"Types & Inference",
+    lede:"Every value in Swift has an exact type, but you rarely have to write it — the compiler reads the value on the right and infers it for you.",
+    body:`
+      <h2>Reading a value's shape</h2>
+      <p>Swift's core types include <code class="inline">Int</code>, <code class="inline">Double</code>, <code class="inline">String</code>, and <code class="inline">Bool</code>. You can spell the type out, or just let Swift infer it from the literal you write.</p>
+      <div class="codeblock"><div class="cb-head"><span class="dot2 r"></span><span class="dot2 y"></span><span class="dot2 g"></span><span class="fname">Types.swift</span></div>
+      <pre><span class="tk-kw">let</span> age: <span class="tk-type">Int</span> = <span class="tk-num">29</span>        <span class="tk-com">// explicit</span>
+<span class="tk-kw">let</span> name = <span class="tk-str">"Ada"</span>           <span class="tk-com">// inferred: String</span>
+<span class="tk-kw">let</span> pi = <span class="tk-num">3.14159</span>          <span class="tk-com">// inferred: Double</span>
+<span class="tk-kw">let</span> isOnline = <span class="tk-kw">true</span>        <span class="tk-com">// inferred: Bool</span></pre></div>
+      <h2>Guess the type</h2>
+      <div class="lab" id="lab-types">
+        <div class="lab-head"><span class="ic">▣</span><span class="lab-title">Type inference engine</span><span class="lab-hint">type a literal, see what Swift infers</span></div>
+        <div class="lab-body">
+          <div class="lab-controls">
+            <div class="ctl"><label>Literal value</label>
+              <input type="text" id="types-input" placeholder='e.g. 42, "hi", 3.5, true' value="42" />
+            </div>
+            <div class="ctl" style="justify-content:flex-end;"><button class="btn" id="types-run">Infer type →</button></div>
+          </div>
+          <div class="console" id="types-console"><span class="arrow">›</span><span class="info">Int</span></div>
+        </div>
+      </div>
+      <p>Inference saves typing, but the type is still there underneath — fixed the moment the constant is created, which is why mixing an <code class="inline">Int</code> and a <code class="inline">String</code> in arithmetic won't compile.</p>
+    `
+  },
+
+  optionals: {
+    eyebrow:"Chapter 01 · The Basics", title:"Optionals",
+    lede:"Swift has no silent “null” surprises. If a value might be missing, its type has to admit that — and you must unwrap it before use.",
+    body:`
+      <h2>A box that might be empty</h2>
+      <p>An <code class="inline">Int?</code> is either a wrapped <code class="inline">Int</code> or <code class="inline">nil</code>. You can't accidentally use it as a plain <code class="inline">Int</code> — Swift forces you to check first, usually with <code class="inline">if let</code>.</p>
+      <div class="codeblock"><div class="cb-head"><span class="dot2 r"></span><span class="dot2 y"></span><span class="dot2 g"></span><span class="fname">Optionals.swift</span></div>
+      <pre><span class="tk-kw">var</span> ticket: <span class="tk-type">Int</span>? = <span class="tk-num">42</span>
+
+<span class="tk-kw">if</span> <span class="tk-kw">let</span> number = ticket {
+    <span class="tk-fn">print</span>(<span class="tk-str">"Your number is \\(number)"</span>)
+} <span class="tk-kw">else</span> {
+    <span class="tk-fn">print</span>(<span class="tk-str">"No ticket yet"</span>)
+}</pre></div>
+      <h2>Pull the lever, see what unwraps</h2>
+      <div class="lab" id="lab-optionals">
+        <div class="lab-head"><span class="ic">▣</span><span class="lab-title">Optional binding simulator</span><span class="lab-hint">if let in motion</span></div>
+        <div class="lab-body">
+          <div class="lab-controls">
+            <div class="ctl"><label>ticket: Int?</label>
+              <div class="seg" id="opt-seg">
+                <button data-v="value" class="active">has value (42)</button>
+                <button data-v="nil">nil</button>
+              </div>
+            </div>
+            <div class="ctl" style="justify-content:flex-end;"><button class="btn" id="opt-run">Run if-let →</button></div>
+          </div>
+          <div class="console" id="opt-console"><span class="arrow">›</span><span class="info">press run</span></div>
+        </div>
+      </div>
+      <p>Set it to <code class="inline">nil</code> and the <code class="inline">else</code> branch runs instead of crashing — that's the entire point of optionals: the missing case is handled in plain sight, not discovered at 2am in a crash log.</p>
+    `
+  },
+
+  ifswitch: {
+    eyebrow:"Chapter 02 · Control Flow", title:"if & switch",
+    lede:"Branching in Swift reads close to plain English, and switch demands you cover every case — so a forgotten branch is a compile error, not a bug report.",
+    body:`
+      <h2>Deciding what runs</h2>
+      <div class="codeblock"><div class="cb-head"><span class="dot2 r"></span><span class="dot2 y"></span><span class="dot2 g"></span><span class="fname">Branching.swift</span></div>
+      <pre><span class="tk-kw">let</span> score = <span class="tk-num">82</span>
+
+<span class="tk-kw">switch</span> score {
+<span class="tk-kw">case</span> <span class="tk-num">90</span>...<span class="tk-num">100</span>: <span class="tk-fn">print</span>(<span class="tk-str">"A"</span>)
+<span class="tk-kw">case</span> <span class="tk-num">80</span>..&lt;<span class="tk-num">90</span>:  <span class="tk-fn">print</span>(<span class="tk-str">"B"</span>)
+<span class="tk-kw">case</span> <span class="tk-num">70</span>..&lt;<span class="tk-num">80</span>:  <span class="tk-fn">print</span>(<span class="tk-str">"C"</span>)
+<span class="tk-kw">default</span>:          <span class="tk-fn">print</span>(<span class="tk-str">"F"</span>)
+}</pre></div>
+      <p>Ranges like <code class="inline">90...100</code> read like the grading rubric they represent, and <code class="inline">default</code> catches anything not explicitly named.</p>
+      <h2>Slide the score, watch the branch light up</h2>
+      <div class="lab" id="lab-ifswitch">
+        <div class="lab-head"><span class="ic">▣</span><span class="lab-title">Grade switch</span><span class="lab-hint">drag the slider</span></div>
+        <div class="lab-body">
+          <div class="lab-controls">
+            <div class="ctl"><label id="ifswitch-scorelabel">Score: 82</label>
+              <input type="range" id="ifswitch-range" min="0" max="100" value="82" />
+            </div>
+          </div>
+          <div class="tape" id="ifswitch-tape">
+            <div class="cell" data-band="90-100">A · 90...100</div>
+            <div class="cell" data-band="80-89">B · 80..&lt;90</div>
+            <div class="cell" data-band="70-79">C · 70..&lt;80</div>
+            <div class="cell" data-band="default">F · default</div>
+          </div>
+          <div class="console" id="ifswitch-console"><span class="arrow">›</span><span class="ok">B</span></div>
+        </div>
+      </div>
+    `
+  },
+
+  loops: {
+    eyebrow:"Chapter 02 · Control Flow", title:"Loops",
+    lede:"for-in walks a sequence directly — no index bookkeeping, no off-by-one errors. while keeps going as long as a condition holds.",
+    body:`
+      <h2>Walking a range</h2>
+      <div class="codeblock"><div class="cb-head"><span class="dot2 r"></span><span class="dot2 y"></span><span class="dot2 g"></span><span class="fname">Loops.swift</span></div>
+      <pre><span class="tk-kw">for</span> i <span class="tk-kw">in</span> <span class="tk-num">1</span>...<span class="tk-num">5</span> {
+    <span class="tk-fn">print</span>(<span class="tk-str">"Rep \\(i)"</span>)
+}</pre></div>
+      <h2>Step through it yourself</h2>
+      <div class="lab" id="lab-loops">
+        <div class="lab-head"><span class="ic">▣</span><span class="lab-title">for-in stepper</span><span class="lab-hint">set the range, press play</span></div>
+        <div class="lab-body">
+          <div class="lab-controls">
+            <div class="ctl"><label>From</label><input type="number" id="loops-from" value="1" style="width:70px;"/></div>
+            <div class="ctl"><label>To</label><input type="number" id="loops-to" value="5" style="width:70px;"/></div>
+            <div class="ctl" style="justify-content:flex-end;"><button class="btn" id="loops-run">▶ Run loop</button></div>
+          </div>
+          <div class="tape" id="loops-tape"></div>
+          <div class="console" id="loops-console"><span class="arrow">›</span><span class="info">press run</span></div>
+        </div>
+      </div>
+      <p>Each cell lights up in turn, just like the loop body executing once per element — when the range is exhausted, the loop simply ends, no extra check needed.</p>
+    `
+  },
+
+  functions: {
+    eyebrow:"Chapter 03 · Functions & Closures", title:"Functions",
+    lede:"A function is a named, reusable chunk of behavior with typed inputs and a typed output — the signature alone tells you what it needs and what it gives back.",
+    body:`
+      <h2>Shape of a function</h2>
+      <div class="codeblock"><div class="cb-head"><span class="dot2 r"></span><span class="dot2 y"></span><span class="dot2 g"></span><span class="fname">Functions.swift</span></div>
+      <pre><span class="tk-kw">func</span> <span class="tk-fn">greet</span>(name: <span class="tk-type">String</span>, excited: <span class="tk-type">Bool</span>) -&gt; <span class="tk-type">String</span> {
+    <span class="tk-kw">return</span> excited ? <span class="tk-str">"HEY \\(name)!!"</span> : <span class="tk-str">"Hello, \\(name)."</span>
+}</pre></div>
+      <h2>Call it with your own arguments</h2>
+      <div class="lab" id="lab-functions">
+        <div class="lab-head"><span class="ic">▣</span><span class="lab-title">Function call sandbox</span><span class="lab-hint">fill the parameters</span></div>
+        <div class="lab-body">
+          <div class="lab-controls">
+            <div class="ctl"><label>name: String</label><input type="text" id="fn-name" value="Ada" /></div>
+            <div class="ctl"><label>excited: Bool</label>
+              <div class="seg" id="fn-seg"><button data-v="true" class="active">true</button><button data-v="false">false</button></div>
+            </div>
+            <div class="ctl" style="justify-content:flex-end;"><button class="btn" id="fn-run">greet(...) →</button></div>
+          </div>
+          <div class="console" id="fn-console"><span class="arrow">›</span><span class="info">press run</span></div>
+        </div>
+      </div>
+      <p>The return type, <code class="inline">-&gt; String</code>, is a promise: whatever path the function takes internally, it always hands back a <code class="inline">String</code>.</p>
+    `
+  },
+
+  closures: {
+    eyebrow:"Chapter 03 · Functions & Closures", title:"Closures",
+    lede:"A closure is a function without a name, light enough to pass around as a value — perfect for telling map or filter exactly how to transform each element.",
+    body:`
+      <h2>Transforming a collection</h2>
+      <div class="codeblock"><div class="cb-head"><span class="dot2 r"></span><span class="dot2 y"></span><span class="dot2 g"></span><span class="fname">Closures.swift</span></div>
+      <pre><span class="tk-kw">let</span> numbers = [<span class="tk-num">1</span>, <span class="tk-num">2</span>, <span class="tk-num">3</span>, <span class="tk-num">4</span>]
+<span class="tk-kw">let</span> doubled = numbers.<span class="tk-fn">map</span> { n <span class="tk-kw">in</span> n * <span class="tk-num">2</span> }
+<span class="tk-com">// doubled == [2, 4, 6, 8]</span></pre></div>
+      <h2>Pick your own transform</h2>
+      <div class="lab" id="lab-closures">
+        <div class="lab-head"><span class="ic">▣</span><span class="lab-title">map { } playground</span><span class="lab-hint">choose the closure body</span></div>
+        <div class="lab-body">
+          <div class="lab-controls">
+            <div class="ctl"><label>closure</label>
+              <div class="seg" id="cl-seg">
+                <button data-v="double" class="active">n * 2</button>
+                <button data-v="square">n * n</button>
+                <button data-v="plus10">n + 10</button>
+              </div>
+            </div>
+          </div>
+          <div class="tape" id="cl-input">
+            <div class="cell">1</div><div class="cell">2</div><div class="cell">3</div><div class="cell">4</div>
+          </div>
+          <div class="console" id="cl-console"><span class="arrow">›</span><span class="ok">[2, 4, 6, 8]</span></div>
+        </div>
+      </div>
+      <p>Nothing about <code class="inline">numbers</code> changes — <code class="inline">map</code> always returns a brand-new array, leaving the original untouched.</p>
+    `
+  },
+
+  closurescapture: {
+    eyebrow:"Chapter 03 · Functions & Closures", title:"Capturing, Escaping & Autoclosures",
+    lede:"A closure doesn't just read the variables around it — it captures them, holding on even after the surrounding function has returned. Whether that closure is allowed to outlive the function is something Swift makes you spell out.",
+    body:`
+      <h2>A closure that remembers</h2>
+      <div class="codeblock"><div class="cb-head"><span class="dot2 r"></span><span class="dot2 y"></span><span class="dot2 g"></span><span class="fname">Capture.swift</span></div>
+      <pre><span class="tk-kw">func</span> <span class="tk-fn">makeCounter</span>() -&gt; () -&gt; <span class="tk-type">Int</span> {
+    <span class="tk-kw">var</span> count = <span class="tk-num">0</span>
+    <span class="tk-kw">return</span> { count += <span class="tk-num">1</span>; <span class="tk-kw">return</span> count }   <span class="tk-com">// captures count by reference</span>
+}
+<span class="tk-kw">let</span> counter = <span class="tk-fn">makeCounter</span>()
+counter()   <span class="tk-com">// 1 — count lives on inside the closure</span>
+counter()   <span class="tk-com">// 2</span></pre></div>
+      <p><code class="inline">count</code> is a local variable, but it isn't deallocated when <code class="inline">makeCounter</code> returns — the closure captured it, so it stays alive for as long as the closure does.</p>
+      <h2>Escaping: outliving the function that received it</h2>
+      <div class="codeblock"><div class="cb-head"><span class="dot2 r"></span><span class="dot2 y"></span><span class="dot2 g"></span><span class="fname">Escaping.swift</span></div>
+      <pre><span class="tk-kw">var</span> completions: [() -&gt; <span class="tk-type">Void</span>] = []
+
+<span class="tk-kw">func</span> <span class="tk-fn">onFinish</span>(_ work: <span class="tk-kw">@escaping</span> () -&gt; <span class="tk-type">Void</span>) {
+    completions.append(work)   <span class="tk-com">// stored — must be marked @escaping</span>
+}
+
+<span class="tk-kw">func</span> <span class="tk-fn">runNow</span>(_ work: () -&gt; <span class="tk-type">Void</span>) {
+    work()                     <span class="tk-com">// runs before returning — no @escaping needed</span>
+}</pre></div>
+      <p>If a closure parameter is stored in a property, an array, or handed to something async like <code class="inline">DispatchQueue.main.async</code>, the compiler requires <code class="inline">@escaping</code> — its lifetime can no longer be guaranteed to end with the function call.</p>
+      <h2>Autoclosures: deferring an expression's evaluation</h2>
+      <div class="codeblock"><div class="cb-head"><span class="dot2 r"></span><span class="dot2 y"></span><span class="dot2 g"></span><span class="fname">Autoclosure.swift</span></div>
+      <pre><span class="tk-kw">func</span> <span class="tk-fn">logIfTrue</span>(_ condition: <span class="tk-kw">@autoclosure</span> () -&gt; <span class="tk-type">Bool</span>, _ message: <span class="tk-type">String</span>) {
+    <span class="tk-kw">if</span> condition() { <span class="tk-fn">print</span>(message) }
+}
+<span class="tk-fn">logIfTrue</span>(user.isAdmin, <span class="tk-str">"admin action"</span>)   <span class="tk-com">// reads like a plain expression, not a closure</span></pre></div>
+      <p><code class="inline">@autoclosure</code> wraps the argument expression in a closure automatically, so the caller writes <code class="inline">user.isAdmin</code> instead of <code class="inline">{ user.isAdmin }</code> — and crucially, the expression is only evaluated if <code class="inline">condition()</code> is actually called inside the function.</p>
+      <h2>Fire a stored, escaping closure later</h2>
+      <div class="lab" id="lab-closurescapture">
+        <div class="lab-head"><span class="ic">▣</span><span class="lab-title">Escaping closure queue</span><span class="lab-hint">store now, run on demand</span></div>
+        <div class="lab-body">
+          <div class="lab-controls">
+            <div class="ctl"><label>message to capture</label><input type="text" id="cc-msg" value="task A" /></div>
+            <div class="ctl" style="justify-content:flex-end;"><button class="btn" id="cc-store">onFinish { … } →</button></div>
+            <div class="ctl" style="justify-content:flex-end;"><button class="btn secondary" id="cc-run">run stored completions →</button></div>
+          </div>
+          <div class="tape" id="cc-tape"></div>
+          <div class="console" id="cc-console"><span class="arrow">›</span><span class="info">queue is empty</span></div>
+        </div>
+      </div>
+      <p>The function that stored each closure has long since returned by the time you press "run" — that's exactly what <code class="inline">@escaping</code> was warning you about.</p>
+    `
+  },
+
+  arrays: {
+    eyebrow:"Chapter 04 · Collections", title:"Arrays",
+    lede:"An array is an ordered list of values of one type. Position matters, duplicates are allowed, and every element shares the same type.",
+    body:`
+      <h2>Ordered, indexed, typed</h2>
+      <div class="codeblock"><div class="cb-head"><span class="dot2 r"></span><span class="dot2 y"></span><span class="dot2 g"></span><span class="fname">Arrays.swift</span></div>
+      <pre><span class="tk-kw">var</span> fruits = [<span class="tk-str">"apple"</span>, <span class="tk-str">"pear"</span>]
+fruits.<span class="tk-fn">append</span>(<span class="tk-str">"fig"</span>)
+fruits.<span class="tk-fn">remove</span>(at: <span class="tk-num">0</span>)
+<span class="tk-com">// fruits == ["pear", "fig"]</span></pre></div>
+      <h2>Build the array yourself</h2>
+      <div class="lab" id="lab-arrays">
+        <div class="lab-head"><span class="ic">▣</span><span class="lab-title">Array editor</span><span class="lab-hint">append / remove at index</span></div>
+        <div class="lab-body">
+          <div class="lab-controls">
+            <div class="ctl"><label>value to append</label><input type="text" id="arr-val" value="fig" /></div>
+            <div class="ctl" style="justify-content:flex-end;"><button class="btn" id="arr-add">append →</button></div>
+            <div class="ctl"><label>remove at index</label><input type="number" id="arr-idx" value="0" style="width:70px;" min="0"/></div>
+            <div class="ctl" style="justify-content:flex-end;"><button class="btn secondary" id="arr-rm">remove(at:) →</button></div>
+            <div class="ctl" style="justify-content:flex-end;"><button class="btn secondary" id="arr-reset">reset</button></div>
+          </div>
+          <div class="tape" id="arr-tape"></div>
+          <div class="console" id="arr-console"><span class="arrow">›</span><span class="info">["apple", "pear"]</span></div>
+        </div>
+      </div>
+    `
+  },
+
+  dicts: {
+    eyebrow:"Chapter 04 · Collections", title:"Dictionaries",
+    lede:"A dictionary stores key–value pairs with no guaranteed order. Look something up by its key and you get back an optional — because the key might not exist.",
+    body:`
+      <h2>Lookup by key</h2>
+      <div class="codeblock"><div class="cb-head"><span class="dot2 r"></span><span class="dot2 y"></span><span class="dot2 g"></span><span class="fname">Dictionaries.swift</span></div>
+      <pre><span class="tk-kw">var</span> ages = [<span class="tk-str">"Ada"</span>: <span class="tk-num">36</span>, <span class="tk-str">"Grace"</span>: <span class="tk-num">85</span>]
+ages[<span class="tk-str">"Linus"</span>] = <span class="tk-num">54</span>
+<span class="tk-kw">let</span> found = ages[<span class="tk-str">"Ada"</span>]   <span class="tk-com">// Int? → .some(36)</span></pre></div>
+      <h2>Add a pair, then look one up</h2>
+      <div class="lab" id="lab-dicts">
+        <div class="lab-head"><span class="ic">▣</span><span class="lab-title">Dictionary explorer</span><span class="lab-hint">set & lookup</span></div>
+        <div class="lab-body">
+          <div class="lab-controls">
+            <div class="ctl"><label>key</label><input type="text" id="dict-key" value="Linus" /></div>
+            <div class="ctl"><label>value</label><input type="number" id="dict-val" value="54" style="width:80px;"/></div>
+            <div class="ctl" style="justify-content:flex-end;"><button class="btn" id="dict-set">set →</button></div>
+          </div>
+          <div class="lab-controls">
+            <div class="ctl"><label>look up key</label><input type="text" id="dict-lookup" value="Ada" /></div>
+            <div class="ctl" style="justify-content:flex-end;"><button class="btn secondary" id="dict-get">ages[key] →</button></div>
+          </div>
+          <div class="tape" id="dict-tape"></div>
+          <div class="console" id="dict-console"><span class="arrow">›</span><span class="info">ready</span></div>
+        </div>
+      </div>
+    `
+  },
+
+  structclass: {
+    eyebrow:"Chapter 05 · Structs, Classes & Protocols", title:"Struct vs Class",
+    lede:"This is the single biggest fork in the road in Swift: structs copy on assignment, classes share a reference. Same syntax for declaring properties — wildly different behavior in practice.",
+    body:`
+      <h2>Copy vs. share</h2>
+      <div class="codeblock"><div class="cb-head"><span class="dot2 r"></span><span class="dot2 y"></span><span class="dot2 g"></span><span class="fname">ValueVsRef.swift</span></div>
+      <pre><span class="tk-kw">struct</span> <span class="tk-type">Point</span> { <span class="tk-kw">var</span> x = <span class="tk-num">0</span> }
+<span class="tk-kw">class</span> <span class="tk-type">Counter</span> { <span class="tk-kw">var</span> x = <span class="tk-num">0</span> }
+
+<span class="tk-kw">var</span> p1 = <span class="tk-type">Point</span>(); <span class="tk-kw">var</span> p2 = p1
+p2.x = <span class="tk-num">99</span>   <span class="tk-com">// p1.x is still 0</span>
+
+<span class="tk-kw">let</span> c1 = <span class="tk-type">Counter</span>(); <span class="tk-kw">let</span> c2 = c1
+c2.x = <span class="tk-num">99</span>   <span class="tk-com">// c1.x is ALSO 99</span></pre></div>
+      <h2>Mutate the copy, watch the original</h2>
+      <div class="lab" id="lab-structclass">
+        <div class="lab-head"><span class="ic">▣</span><span class="lab-title">Copy vs reference demo</span><span class="lab-hint">change b.x, see if a.x follows</span></div>
+        <div class="lab-body">
+          <div class="lab-controls">
+            <div class="ctl"><label>Kind</label>
+              <div class="seg" id="sc-seg"><button data-v="struct" class="active">struct</button><button data-v="class">class</button></div>
+            </div>
+            <div class="ctl"><label>new x for b</label><input type="number" id="sc-val" value="99" style="width:80px;"/></div>
+            <div class="ctl" style="justify-content:flex-end;"><button class="btn" id="sc-run">b.x = ... →</button></div>
+            <div class="ctl" style="justify-content:flex-end;"><button class="btn secondary" id="sc-reset">reset</button></div>
+          </div>
+          <div class="two-col">
+            <div class="box-card"><h4>a.x</h4><div class="val" id="sc-a">0</div></div>
+            <div class="box-card"><h4>b.x</h4><div class="val" id="sc-b">0</div></div>
+          </div>
+          <div class="console" id="sc-console" style="margin-top:12px;"><span class="arrow">›</span><span class="info">var a = ...(); var b = a</span></div>
+        </div>
+      </div>
+      <p>Switch to <code class="inline">class</code> and editing <code class="inline">b</code> changes <code class="inline">a</code> too — both names point at the exact same object in memory. With <code class="inline">struct</code>, <code class="inline">b</code> got its own independent copy the moment it was assigned.</p>
+    `
+  },
+
+  protocols: {
+    eyebrow:"Chapter 05 · Structs, Classes & Protocols", title:"Protocols",
+    lede:"A protocol is a contract: a list of methods or properties any type can promise to implement. Code written against the protocol works with anything that conforms — structs, classes, even enums.",
+    body:`
+      <h2>One contract, many shapes</h2>
+      <div class="codeblock"><div class="cb-head"><span class="dot2 r"></span><span class="dot2 y"></span><span class="dot2 g"></span><span class="fname">Protocols.swift</span></div>
+      <pre><span class="tk-kw">protocol</span> <span class="tk-type">Honkable</span> { <span class="tk-kw">func</span> <span class="tk-fn">honk</span>() -&gt; <span class="tk-type">String</span> }
+
+<span class="tk-kw">struct</span> <span class="tk-type">Car</span>: <span class="tk-type">Honkable</span> { <span class="tk-kw">func</span> <span class="tk-fn">honk</span>() -&gt; <span class="tk-type">String</span> { <span class="tk-str">"Beep!"</span> } }
+<span class="tk-kw">struct</span> <span class="tk-type">Goose</span>: <span class="tk-type">Honkable</span> { <span class="tk-kw">func</span> <span class="tk-fn">honk</span>() -&gt; <span class="tk-type">String</span> { <span class="tk-str">"HONK."</span> } }</pre></div>
+      <h2>Swap the conforming type</h2>
+      <div class="lab" id="lab-protocols">
+        <div class="lab-head"><span class="ic">▣</span><span class="lab-title">Protocol dispatch</span><span class="lab-hint">pick a type, call honk()</span></div>
+        <div class="lab-body">
+          <div class="lab-controls">
+            <div class="ctl"><label>Honkable type</label>
+              <div class="seg" id="proto-seg">
+                <button data-v="Car" class="active">Car</button>
+                <button data-v="Goose">Goose</button>
+                <button data-v="Bicycle">Bicycle</button>
+              </div>
+            </div>
+            <div class="ctl" style="justify-content:flex-end;"><button class="btn" id="proto-run">thing.honk() →</button></div>
+          </div>
+          <div class="console" id="proto-console"><span class="arrow">›</span><span class="info">press run</span></div>
+        </div>
+      </div>
+      <p>The calling code never branches on which type it has — it just trusts the contract and calls <code class="inline">honk()</code>. That's what makes protocols the backbone of flexible Swift APIs.</p>
+      <h2>Inheriting a contract, and leaving a type placeholder open</h2>
+      <div class="codeblock"><div class="cb-head"><span class="dot2 r"></span><span class="dot2 y"></span><span class="dot2 g"></span><span class="fname">ProtocolInheritance.swift</span></div>
+      <pre><span class="tk-kw">protocol</span> <span class="tk-type">Vehicle</span> { <span class="tk-kw">var</span> wheels: <span class="tk-type">Int</span> { <span class="tk-kw">get</span> } }
+<span class="tk-kw">protocol</span> <span class="tk-type">MotorizedVehicle</span>: <span class="tk-type">Vehicle</span> { <span class="tk-kw">func</span> <span class="tk-fn">startEngine</span>() }   <span class="tk-com">// inherits Vehicle's requirement, adds its own</span>
+
+<span class="tk-kw">protocol</span> <span class="tk-type">Container</span> {
+    <span class="tk-kw">associatedtype</span> <span class="tk-type">Item</span>           <span class="tk-com">// a placeholder type, filled in by whoever conforms</span>
+    <span class="tk-kw">var</span> items: [Item] { <span class="tk-kw">get</span> }
+}
+<span class="tk-kw">struct</span> <span class="tk-type">Garage</span>: <span class="tk-type">Container</span> { <span class="tk-kw">var</span> items: [<span class="tk-type">Car</span>] = [] }   <span class="tk-com">// Item == Car, inferred</span>
+
+<span class="tk-kw">let</span> fleet: [<span class="tk-kw">any</span> <span class="tk-type">Vehicle</span>] = [<span class="tk-type">Car</span>(), <span class="tk-type">Bicycle</span>()]   <span class="tk-com">// any: a box that erases the concrete type</span></pre></div>
+      <p><code class="inline">MotorizedVehicle</code> conformers must satisfy both protocols' requirements. <code class="inline">associatedtype</code> is what lets one protocol describe a family of containers without committing to what they hold — Swift fills in <code class="inline">Item</code> from how each type actually conforms.</p>
+    `
+  },
+
+  enumbasics: {
+    eyebrow:"Chapter 06 · Enumerations", title:"Enums & switch",
+    lede:"An enum defines a closed set of possible values. Pair it with switch and the compiler will refuse to build until every case is handled.",
+    body:`
+      <h2>A fixed set of possibilities</h2>
+      <div class="codeblock"><div class="cb-head"><span class="dot2 r"></span><span class="dot2 y"></span><span class="dot2 g"></span><span class="fname">Enums.swift</span></div>
+      <pre><span class="tk-kw">enum</span> <span class="tk-type">Direction</span> { <span class="tk-kw">case</span> north, south, east, west }
+
+<span class="tk-kw">func</span> <span class="tk-fn">arrow</span>(for d: <span class="tk-type">Direction</span>) -&gt; <span class="tk-type">String</span> {
+    <span class="tk-kw">switch</span> d {
+    <span class="tk-kw">case</span> .north: <span class="tk-kw">return</span> <span class="tk-str">"↑"</span>
+    <span class="tk-kw">case</span> .south: <span class="tk-kw">return</span> <span class="tk-str">"↓"</span>
+    <span class="tk-kw">case</span> .east:  <span class="tk-kw">return</span> <span class="tk-str">"→"</span>
+    <span class="tk-kw">case</span> .west:  <span class="tk-kw">return</span> <span class="tk-str">"←"</span>
+    }
+}</pre></div>
+      <h2>Spin the compass</h2>
+      <div class="lab" id="lab-enumbasics">
+        <div class="lab-head"><span class="ic">▣</span><span class="lab-title">Direction switch</span><span class="lab-hint">pick a case</span></div>
+        <div class="lab-body">
+          <div class="lab-controls">
+            <div class="ctl"><label>Direction</label>
+              <div class="seg" id="enum-seg">
+                <button data-v="north" class="active">.north</button>
+                <button data-v="south">.south</button>
+                <button data-v="east">.east</button>
+                <button data-v="west">.west</button>
+              </div>
+            </div>
+          </div>
+          <div class="console" id="enum-console" style="font-size:28px; text-align:center;"><span class="ok">↑</span></div>
+        </div>
+      </div>
+      <p>If you ever add a <code class="inline">case .northeast</code> to the enum but forget to handle it in the switch, Swift won't compile — the contract between the enum and every switch over it is enforced for you.</p>
+    `
+  },
+
+  asyncawait: {
+    eyebrow:"Chapter 07 · Concurrency", title:"async/await",
+    lede:"async marks a function as one that can pause without blocking the thread it's running on. await is where you choose to pause — and the compiler tracks every one of those points for you.",
+    body:`
+      <h2>Pausing without blocking</h2>
+      <p>A normal function returns the moment its last line runs. An <code class="inline">async</code> function can suspend in the middle — at an <code class="inline">await</code> — and hand control back, then resume later once the awaited work finishes.</p>
+      <div class="codeblock"><div class="cb-head"><span class="dot2 r"></span><span class="dot2 y"></span><span class="dot2 g"></span><span class="fname">Network.swift</span></div>
+      <pre><span class="tk-kw">func</span> <span class="tk-fn">fetchProfile</span>() <span class="tk-kw">async</span> <span class="tk-kw">throws</span> -&gt; <span class="tk-type">Profile</span> {
+    <span class="tk-kw">let</span> (data, _) = <span class="tk-kw">try</span> <span class="tk-kw">await</span> <span class="tk-type">URLSession</span>.shared.<span class="tk-fn">data</span>(from: url)
+    <span class="tk-kw">return</span> <span class="tk-kw">try</span> <span class="tk-type">JSONDecoder</span>().<span class="tk-fn">decode</span>(<span class="tk-type">Profile</span>.<span class="tk-kw">self</span>, from: data)
+}
+
+<span class="tk-kw">let</span> profile = <span class="tk-kw">try</span> <span class="tk-kw">await</span> <span class="tk-fn">fetchProfile</span>()</pre></div>
+      <p>No completion handler, no nested closures — the code reads top to bottom even though it suspends partway through.</p>
+      <h2>Watch a function suspend and resume</h2>
+      <div class="lab" id="lab-asyncawait">
+        <div class="lab-head"><span class="ic">▣</span><span class="lab-title">Suspension timeline</span><span class="lab-hint">simulated network delay</span></div>
+        <div class="lab-body">
+          <div class="lab-controls">
+            <div class="ctl"><label>Simulated latency</label>
+              <div class="seg" id="aa-seg">
+                <button data-v="fast" class="active">fast (~0.4s)</button>
+                <button data-v="slow">slow (~1.6s)</button>
+                <button data-v="fail">fails</button>
+              </div>
+            </div>
+            <div class="ctl" style="justify-content:flex-end;"><button class="btn" id="aa-run">await fetchProfile() →</button></div>
+          </div>
+          <div class="console" id="aa-console"><span class="arrow">›</span><span class="info">press run</span></div>
+        </div>
+      </div>
+      <p>Notice the caller's thread is never frozen waiting — in a real app, the UI keeps scrolling while this is in flight. <code class="inline">await</code> only marks where <em>this</em> function's progress can pause.</p>
+    `
+  },
+
+  actors: {
+    eyebrow:"Chapter 07 · Concurrency", title:"Actors",
+    lede:"A class shared across threads can have two pieces of code mutate the same property at once — a data race. An actor only ever runs one piece of code against its state at a time, so that race can't happen.",
+    body:`
+      <h2>One door in, no exceptions</h2>
+      <p>Every call into an actor's methods or properties is serialized automatically. Two concurrent deposits don't interleave — the second simply waits its turn.</p>
+      <div class="codeblock"><div class="cb-head"><span class="dot2 r"></span><span class="dot2 y"></span><span class="dot2 g"></span><span class="fname">BankAccount.swift</span></div>
+      <pre><span class="tk-kw">actor</span> <span class="tk-type">BankAccount</span> {
+    <span class="tk-kw">private</span> <span class="tk-kw">var</span> balance = <span class="tk-num">0</span>
+    <span class="tk-kw">func</span> <span class="tk-fn">deposit</span>(_ amount: <span class="tk-type">Int</span>) { balance += amount }
+    <span class="tk-kw">func</span> <span class="tk-fn">current</span>() -&gt; <span class="tk-type">Int</span> { balance }
+}
+
+<span class="tk-kw">let</span> account = <span class="tk-type">BankAccount</span>()
+<span class="tk-kw">await</span> account.<span class="tk-fn">deposit</span>(<span class="tk-num">50</span>)   <span class="tk-com">// every call hops through await</span></pre></div>
+      <h2>Fire concurrent deposits at a class vs. an actor</h2>
+      <div class="lab" id="lab-actors">
+        <div class="lab-head"><span class="ic">▣</span><span class="lab-title">Race condition simulator</span><span class="lab-hint">10 concurrent +1 deposits, each with a random tiny delay</span></div>
+        <div class="lab-body">
+          <div class="lab-controls">
+            <div class="ctl"><label>Storage kind</label>
+              <div class="seg" id="actor-seg"><button data-v="class" class="active">plain class</button><button data-v="actor">actor</button></div>
+            </div>
+            <div class="ctl" style="justify-content:flex-end;"><button class="btn" id="actor-run">fire 10 concurrent deposits →</button></div>
+          </div>
+          <div class="two-col">
+            <div class="box-card"><h4>expected balance</h4><div class="val">10</div></div>
+            <div class="box-card"><h4>actual balance</h4><div class="val" id="actor-bal">0</div></div>
+          </div>
+          <div class="console" id="actor-console" style="margin-top:12px;"><span class="arrow">›</span><span class="info">press run</span></div>
+        </div>
+      </div>
+      <p>With a plain class, two deposits can both read the old balance before either writes it back — one increment gets silently lost. The actor never lets that interleaving happen, so it always lands on the right number.</p>
+    `
+  },
+
+  pubsub: {
+    eyebrow:"Chapter 08 · Combine", title:"Publishers & Subscribers",
+    lede:"Combine models a value over time as a stream: a Publisher emits it, a Subscriber reacts to it. @Published turns an ordinary property into a publisher with one word.",
+    body:`
+      <h2>A property that broadcasts its own changes</h2>
+      <div class="codeblock"><div class="cb-head"><span class="dot2 r"></span><span class="dot2 y"></span><span class="dot2 g"></span><span class="fname">Ticker.swift</span></div>
+      <pre><span class="tk-kw">class</span> <span class="tk-type">Ticker</span> {
+    <span class="tk-kw">@Published</span> <span class="tk-kw">var</span> price = <span class="tk-num">0</span>
+}
+
+<span class="tk-kw">let</span> ticker = <span class="tk-type">Ticker</span>()
+<span class="tk-kw">let</span> cancellable = ticker.$price
+    .sink { newPrice <span class="tk-kw">in</span> <span class="tk-fn">print</span>(<span class="tk-str">"Price is now \\(newPrice)"</span>) }
+
+ticker.price = <span class="tk-num">102</span>   <span class="tk-com">// sink fires immediately</span></pre></div>
+      <p>The <code class="inline">$</code> prefix exposes the publisher for the property. <code class="inline">sink</code> is the simplest subscriber: a closure that runs every time a new value arrives.</p>
+      <h2>Publish a value, watch the sink fire</h2>
+      <div class="lab" id="lab-pubsub">
+        <div class="lab-head"><span class="ic">▣</span><span class="lab-title">@Published / sink</span><span class="lab-hint">subscribed since the lesson loaded</span></div>
+        <div class="lab-body">
+          <div class="lab-controls">
+            <div class="ctl"><label>new ticker.price</label><input type="number" id="ps-val" value="102" /></div>
+            <div class="ctl" style="justify-content:flex-end;"><button class="btn" id="ps-run">ticker.price = … →</button></div>
+          </div>
+          <div class="console" id="ps-console"><span class="arrow">›</span><span class="info">Price is now 0</span></div>
+        </div>
+      </div>
+      <p>Every assignment re-fires the sink — there's no polling, no "did it change?" check. The subscriber is simply told.</p>
+    `
+  },
+
+  operators: {
+    eyebrow:"Chapter 08 · Combine", title:"Operators",
+    lede:"Operators sit between a publisher and its subscriber, transforming the stream as it flows — the same map and filter you know from arrays, but applied over time.",
+    body:`
+      <h2>Chaining transformations on a stream</h2>
+      <div class="codeblock"><div class="cb-head"><span class="dot2 r"></span><span class="dot2 y"></span><span class="dot2 g"></span><span class="fname">Operators.swift</span></div>
+      <pre>$searchText
+    .filter { !<span class="tk-fn">$0</span>.isEmpty }
+    .map { <span class="tk-fn">$0</span>.lowercased() }
+    .sink { query <span class="tk-kw">in</span> <span class="tk-fn">search</span>(query) }</pre></div>
+      <p>Each value passes through the chain left to right — <code class="inline">filter</code> drops empty strings before <code class="inline">map</code> ever sees them, so <code class="inline">search</code> only ever receives a clean, lowercased query.</p>
+      <h2>Build a small pipeline</h2>
+      <div class="lab" id="lab-operators">
+        <div class="lab-head"><span class="ic">▣</span><span class="lab-title">Operator pipeline</span><span class="lab-hint">values pushed one at a time</span></div>
+        <div class="lab-body">
+          <div class="lab-controls">
+            <div class="ctl"><label>Pipeline</label>
+              <div class="seg" id="op-seg">
+                <button data-v="double" class="active">.map { $0 * 2 }</button>
+                <button data-v="even">.filter { $0 % 2 == 0 }</button>
+                <button data-v="evendouble">.filter even .map double</button>
+              </div>
+            </div>
+            <div class="ctl"><label>value to push</label><input type="number" id="op-val" value="3" style="width:80px;"/></div>
+            <div class="ctl" style="justify-content:flex-end;"><button class="btn" id="op-run">push →</button></div>
+          </div>
+          <div class="console" id="op-console"><span class="arrow">›</span><span class="info">ready</span></div>
+        </div>
+      </div>
+      <p>Switch pipelines and push the same value again — the dropped values in the filter case never reach the sink at all; they're not transformed, they simply never arrive.</p>
+    `
+  },
+
+  datamodel: {
+    eyebrow:"Chapter 09 · Core Data", title:"Model & Fetching",
+    lede:"Core Data stores objects as managed instances of entities you define in a model file. To get any of them back, you describe what you want with an NSFetchRequest, optionally narrowed by a predicate.",
+    body:`
+      <h2>Describing what you want back</h2>
+      <div class="codeblock"><div class="cb-head"><span class="dot2 r"></span><span class="dot2 y"></span><span class="dot2 g"></span><span class="fname">Fetching.swift</span></div>
+      <pre><span class="tk-kw">let</span> request: <span class="tk-type">NSFetchRequest</span>&lt;<span class="tk-type">Book</span>&gt; = <span class="tk-type">Book</span>.fetchRequest()
+request.predicate = <span class="tk-type">NSPredicate</span>(format: <span class="tk-str">"isRead == false"</span>)
+request.sortDescriptors = [<span class="tk-type">NSSortDescriptor</span>(key: <span class="tk-str">"title"</span>, ascending: <span class="tk-kw">true</span>)]
+
+<span class="tk-kw">let</span> unread = <span class="tk-kw">try</span> context.<span class="tk-fn">fetch</span>(request)</pre></div>
+      <p>Nothing is loaded into memory until <code class="inline">fetch</code> runs — the predicate is translated into SQL underneath, so filtering happens in the store, not in a Swift loop after the fact.</p>
+      <h2>Filter a small bookshelf</h2>
+      <div class="lab" id="lab-datamodel">
+        <div class="lab-head"><span class="ic">▣</span><span class="lab-title">Predicate filter</span><span class="lab-hint">five Book entities already in the store</span></div>
+        <div class="lab-body">
+          <div class="lab-controls">
+            <div class="ctl"><label>NSPredicate</label>
+              <div class="seg" id="dm-seg">
+                <button data-v="all" class="active">no predicate</button>
+                <button data-v="unread">isRead == false</button>
+                <button data-v="short">pageCount &lt; 300</button>
+              </div>
+            </div>
+          </div>
+          <div class="tape" id="dm-tape"></div>
+          <div class="console" id="dm-console"><span class="arrow">›</span><span class="info">try context.fetch(request)</span></div>
+        </div>
+      </div>
+    `
+  },
+
+  savingrels: {
+    eyebrow:"Chapter 09 · Core Data", title:"Saving & Relationships",
+    lede:"New or edited objects live only in memory, in the managed object context, until you explicitly save. Relationships connect entities to each other and stay consistent automatically in both directions.",
+    body:`
+      <h2>The context is a scratchpad, not the database</h2>
+      <div class="codeblock"><div class="cb-head"><span class="dot2 r"></span><span class="dot2 y"></span><span class="dot2 g"></span><span class="fname">Saving.swift</span></div>
+      <pre><span class="tk-kw">let</span> book = <span class="tk-type">Book</span>(context: context)
+book.title = <span class="tk-str">"Dune"</span>
+book.author = author   <span class="tk-com">// inverse relationship updates author.books too</span>
+
+<span class="tk-kw">if</span> context.hasChanges {
+    <span class="tk-kw">try</span> context.<span class="tk-fn">save</span>()   <span class="tk-com">// now it's persisted to disk</span>
+}</pre></div>
+      <p>Until <code class="inline">save()</code> runs, every change is just a pending edit in the context — quit the app and an unsaved <code class="inline">book</code> is gone, no different than any other in-memory object.</p>
+      <h2>Insert, then watch the context become dirty</h2>
+      <div class="lab" id="lab-savingrels">
+        <div class="lab-head"><span class="ic">▣</span><span class="lab-title">Context lifecycle</span><span class="lab-hint">insert → dirty → save</span></div>
+        <div class="lab-body">
+          <div class="lab-controls">
+            <div class="ctl"><label>book title</label><input type="text" id="sr-title" value="Dune" /></div>
+            <div class="ctl" style="justify-content:flex-end;"><button class="btn" id="sr-insert">Book(context:) →</button></div>
+            <div class="ctl" style="justify-content:flex-end;"><button class="btn secondary" id="sr-save">context.save() →</button></div>
+          </div>
+          <div class="two-col">
+            <div class="box-card"><h4>context state</h4><div class="val" id="sr-state">clean</div></div>
+            <div class="box-card"><h4>persisted rows</h4><div class="val" id="sr-count">0</div></div>
+          </div>
+          <div class="console" id="sr-console" style="margin-top:12px;"><span class="arrow">›</span><span class="info">ready</span></div>
+        </div>
+      </div>
+      <p>Insert without saving and the context flips to <code class="inline">dirty</code> while the persisted count doesn't move — only <code class="inline">save()</code> writes it through.</p>
+    `
+  },
+
+  mvcvsmvvm: {
+    eyebrow:"Chapter 10 · Architecture", title:"MVC vs MVVM",
+    lede:"Both patterns split an app into layers so a screen's logic doesn't get tangled with its display code. The difference is where state and formatting logic are allowed to live.",
+    body:`
+      <h2>Where the logic lives</h2>
+      <p>In MVC, the view controller often ends up doing double duty — coordinating the view <em>and</em> holding business logic, which is how "Massive View Controller" happens. MVVM pulls that logic out into a ViewModel the view binds to, leaving the view controller as a thin pass-through.</p>
+      <div class="codeblock"><div class="cb-head"><span class="dot2 r"></span><span class="dot2 y"></span><span class="dot2 g"></span><span class="fname">Compare.swift</span></div>
+      <pre><span class="tk-com">// MVC: the controller formats data itself</span>
+label.text = <span class="tk-str">"$\\(String(format: "%.2f", price))"</span>
+
+<span class="tk-com">// MVVM: the view model exposes it already formatted</span>
+label.text = viewModel.formattedPrice</pre></div>
+      <h2>Drag logic between layers</h2>
+      <div class="lab" id="lab-mvcvsmvvm">
+        <div class="lab-head"><span class="ic">▣</span><span class="lab-title">Where does formatting live?</span><span class="lab-hint">pick a pattern, see who owns it</span></div>
+        <div class="lab-body">
+          <div class="lab-controls">
+            <div class="ctl"><label>Pattern</label>
+              <div class="seg" id="mvc-seg"><button data-v="mvc" class="active">MVC</button><button data-v="mvvm">MVVM</button></div>
+            </div>
+          </div>
+          <div class="two-col">
+            <div class="box-card"><h4>View Controller</h4><div class="val" id="mvc-vc" style="font-size:13px;">formats price itself</div></div>
+            <div class="box-card"><h4>ViewModel</h4><div class="val" id="mvc-vm" style="font-size:13px;">—</div></div>
+          </div>
+          <div class="console" id="mvc-console" style="margin-top:12px;"><span class="arrow">›</span><span class="info">label.text = "$12.50"</span></div>
+        </div>
+      </div>
+      <p>Neither layer disappears in MVVM — the controller still exists, it just no longer holds formatting decisions. Testing <code class="inline">formattedPrice</code> directly, with no UIKit involved at all, is the payoff.</p>
+    `
+  },
+
+  mvvmpractice: {
+    eyebrow:"Chapter 10 · Architecture", title:"MVVM in Practice",
+    lede:"A ViewModel exposes @Published state the view observes. Type into a field, the ViewModel updates, and any view bound to it redraws — no manual refresh calls anywhere.",
+    body:`
+      <h2>Binding a view to a view model</h2>
+      <div class="codeblock"><div class="cb-head"><span class="dot2 r"></span><span class="dot2 y"></span><span class="dot2 g"></span><span class="fname">SignUpViewModel.swift</span></div>
+      <pre><span class="tk-kw">class</span> <span class="tk-type">SignUpViewModel</span>: <span class="tk-type">ObservableObject</span> {
+    <span class="tk-kw">@Published</span> <span class="tk-kw">var</span> username = <span class="tk-str">""</span>
+    <span class="tk-kw">var</span> isValid: <span class="tk-type">Bool</span> { username.count &gt;= <span class="tk-num">3</span> }
+}
+
+<span class="tk-com">// View</span>
+<span class="tk-type">TextField</span>(<span class="tk-str">"Username"</span>, text: $viewModel.username)
+<span class="tk-type">Text</span>(viewModel.isValid ? <span class="tk-str">"✓ available"</span> : <span class="tk-str">"too short"</span>)</pre></div>
+      <h2>Type a username, watch validity follow</h2>
+      <div class="lab" id="lab-mvvmpractice">
+        <div class="lab-head"><span class="ic">▣</span><span class="lab-title">@Published binding</span><span class="lab-hint">isValid recomputes on every keystroke</span></div>
+        <div class="lab-body">
+          <div class="lab-controls">
+            <div class="ctl"><label>username</label><input type="text" id="mvvmp-input" value="ad" /></div>
+          </div>
+          <div class="console" id="mvvmp-console"><span class="arrow">›</span><span class="err">too short</span></div>
+        </div>
+      </div>
+      <p>The view never asks "has anything changed?" — it just reads <code class="inline">viewModel.isValid</code> whenever it redraws, and the ViewModel is the single source of truth for what that value currently is.</p>
+    `
+  },
+
+  solid: {
+    eyebrow:"Chapter 11 · Design Principles", title:"SOLID Principles",
+    lede:"SOLID is five guidelines for code that stays easy to change. None of them are Swift-specific, but Swift's protocols make most of them easy to apply.",
+    body:`
+      <h2>Five letters, five questions to ask</h2>
+      <div class="codeblock"><div class="cb-head"><span class="dot2 r"></span><span class="dot2 y"></span><span class="dot2 g"></span><span class="fname">SRP.swift</span></div>
+      <pre><span class="tk-com">// Violates SRP: one type formats AND saves AND validates</span>
+<span class="tk-kw">class</span> <span class="tk-type">Invoice</span> {
+    <span class="tk-kw">func</span> <span class="tk-fn">format</span>() -&gt; <span class="tk-type">String</span> { ... }
+    <span class="tk-kw">func</span> <span class="tk-fn">save</span>(to path: <span class="tk-type">String</span>) { ... }
+    <span class="tk-kw">func</span> <span class="tk-fn">validate</span>() -&gt; <span class="tk-type">Bool</span> { ... }
+}</pre></div>
+      <h2>Pick a letter, see the question it asks</h2>
+      <div class="lab" id="lab-solid">
+        <div class="lab-head"><span class="ic">▣</span><span class="lab-title">SOLID explorer</span><span class="lab-hint">one type per principle</span></div>
+        <div class="lab-body">
+          <div class="lab-controls">
+            <div class="ctl"><label>Principle</label>
+              <div class="seg" id="solid-seg">
+                <button data-v="S" class="active">S</button>
+                <button data-v="O">O</button>
+                <button data-v="L">L</button>
+                <button data-v="I">I</button>
+                <button data-v="D">D</button>
+              </div>
+            </div>
+          </div>
+          <div class="console" id="solid-console" style="font-size:14px; line-height:1.6; min-height:60px;"></div>
+        </div>
+      </div>
+      <p>None of these are compiler rules — Swift will happily build code that violates all five. They're a discipline you apply on purpose, because the compiler can't tell you a type is doing too much.</p>
+    `
+  },
+
+  pod: {
+    eyebrow:"Chapter 11 · Design Principles", title:"Protocol-Oriented Design",
+    lede:"Swift encourages composing behavior through protocol extensions rather than inheriting it through a class hierarchy. A type can adopt a default implementation for free, or override it for its own needs.",
+    body:`
+      <h2>A default that any conformer can override</h2>
+      <div class="codeblock"><div class="cb-head"><span class="dot2 r"></span><span class="dot2 y"></span><span class="dot2 g"></span><span class="fname">Describable.swift</span></div>
+      <pre><span class="tk-kw">protocol</span> <span class="tk-type">Describable</span> { <span class="tk-kw">var</span> summary: <span class="tk-type">String</span> { <span class="tk-kw">get</span> } }
+
+<span class="tk-kw">extension</span> <span class="tk-type">Describable</span> {
+    <span class="tk-kw">var</span> summary: <span class="tk-type">String</span> { <span class="tk-str">"a Describable thing"</span> }   <span class="tk-com">// default</span>
+}
+
+<span class="tk-kw">struct</span> <span class="tk-type">Receipt</span>: <span class="tk-type">Describable</span> {}                       <span class="tk-com">// uses default</span>
+<span class="tk-kw">struct</span> <span class="tk-type">Invoice</span>: <span class="tk-type">Describable</span> {
+    <span class="tk-kw">var</span> summary: <span class="tk-type">String</span> { <span class="tk-str">"Invoice #4821"</span> }            <span class="tk-com">// overrides it</span>
+}</pre></div>
+      <h2>Adopt the default, or override it</h2>
+      <div class="lab" id="lab-pod">
+        <div class="lab-head"><span class="ic">▣</span><span class="lab-title">Default implementation</span><span class="lab-hint">pick a conforming type</span></div>
+        <div class="lab-body">
+          <div class="lab-controls">
+            <div class="ctl"><label>Type</label>
+              <div class="seg" id="pod-seg">
+                <button data-v="Receipt" class="active">Receipt</button>
+                <button data-v="Invoice">Invoice</button>
+                <button data-v="Ticket">Ticket</button>
+              </div>
+            </div>
+            <div class="ctl" style="justify-content:flex-end;"><button class="btn" id="pod-run">thing.summary →</button></div>
+          </div>
+          <div class="console" id="pod-console"><span class="arrow">›</span><span class="info">press run</span></div>
+        </div>
+      </div>
+      <p>No base class, no <code class="inline">super.summary</code> call required — each type either inherits the extension's behavior for free or quietly shadows it with its own.</p>
+    `
+  },
+
+  singletonfactory: {
+    eyebrow:"Chapter 12 · Design Patterns", title:"Singleton & Factory",
+    lede:"A singleton guarantees one shared instance for the lifetime of the app. A factory hides which concrete type gets created behind a single call, chosen by what you pass in.",
+    body:`
+      <h2>One shared instance, however you reach it</h2>
+      <div class="codeblock"><div class="cb-head"><span class="dot2 r"></span><span class="dot2 y"></span><span class="dot2 g"></span><span class="fname">Patterns.swift</span></div>
+      <pre><span class="tk-kw">class</span> <span class="tk-type">AnalyticsLogger</span> {
+    <span class="tk-kw">static</span> <span class="tk-kw">let</span> shared = <span class="tk-type">AnalyticsLogger</span>()
+    <span class="tk-kw">private</span> <span class="tk-kw">init</span>() {}
+    <span class="tk-kw">var</span> eventCount = <span class="tk-num">0</span>
+}
+
+<span class="tk-kw">enum</span> <span class="tk-type">VehicleFactory</span> {
+    <span class="tk-kw">static</span> <span class="tk-kw">func</span> <span class="tk-fn">make</span>(_ kind: <span class="tk-type">String</span>) -&gt; <span class="tk-type">Vehicle</span> {
+        <span class="tk-kw">switch</span> kind {
+        <span class="tk-kw">case</span> <span class="tk-str">"car"</span>: <span class="tk-kw">return</span> <span class="tk-type">Car</span>()
+        <span class="tk-kw">default</span>:   <span class="tk-kw">return</span> <span class="tk-type">Bicycle</span>()
+        }
+    }
+}</pre></div>
+      <h2>Call .shared repeatedly, then ask a factory for a type</h2>
+      <div class="lab" id="lab-singletonfactory">
+        <div class="lab-head"><span class="ic">▣</span><span class="lab-title">Singleton & Factory</span><span class="lab-hint">two patterns, side by side</span></div>
+        <div class="lab-body">
+          <div class="lab-controls">
+            <div class="ctl" style="justify-content:flex-end;"><button class="btn" id="sf-shared">AnalyticsLogger.shared.eventCount += 1 →</button></div>
+          </div>
+          <div class="two-col">
+            <div class="box-card"><h4>shared.eventCount</h4><div class="val" id="sf-count">0</div></div>
+            <div class="box-card"><h4>VehicleFactory.make(_:)</h4>
+              <div class="seg" id="sf-seg" style="margin-top:6px;"><button data-v="car" class="active">"car"</button><button data-v="boat">"boat"</button></div>
+            </div>
+          </div>
+          <div class="console" id="sf-console" style="margin-top:12px;"><span class="arrow">›</span><span class="info">press a button</span></div>
+        </div>
+      </div>
+      <p>Every call to <code class="inline">.shared</code> returns the exact same instance, so the counter never resets — while the factory hands back a different concrete type depending only on the string you pass it.</p>
+    `
+  },
+
+  observerdelegate: {
+    eyebrow:"Chapter 12 · Design Patterns", title:"Observer & Delegate",
+    lede:"A delegate is a one-to-one contract: an object hands off specific decisions to exactly one delegate. The observer pattern is one-to-many: any number of listeners can react to the same event.",
+    body:`
+      <h2>One delegate, asked a direct question</h2>
+      <div class="codeblock"><div class="cb-head"><span class="dot2 r"></span><span class="dot2 y"></span><span class="dot2 g"></span><span class="fname">Delegate.swift</span></div>
+      <pre><span class="tk-kw">protocol</span> <span class="tk-type">DownloadDelegate</span>: <span class="tk-type">AnyObject</span> {
+    <span class="tk-kw">func</span> <span class="tk-fn">downloadDidFinish</span>(_ result: <span class="tk-type">String</span>)
+}
+
+<span class="tk-kw">class</span> <span class="tk-type">Downloader</span> {
+    <span class="tk-kw">weak</span> <span class="tk-kw">var</span> delegate: <span class="tk-type">DownloadDelegate</span>?
+    <span class="tk-kw">func</span> <span class="tk-fn">finish</span>() { delegate?.<span class="tk-fn">downloadDidFinish</span>(<span class="tk-str">"ok"</span>) }
+}</pre></div>
+      <p>Compare that to <code class="inline">NotificationCenter</code>, where any number of observers can register for the same event and every one of them gets notified.</p>
+      <h2>One event, fired at one delegate or many observers</h2>
+      <div class="lab" id="lab-observerdelegate">
+        <div class="lab-head"><span class="ic">▣</span><span class="lab-title">Fan-out comparison</span><span class="lab-hint">fire the event, watch who responds</span></div>
+        <div class="lab-body">
+          <div class="lab-controls">
+            <div class="ctl"><label>Pattern</label>
+              <div class="seg" id="od-seg"><button data-v="delegate" class="active">delegate (1 listener)</button><button data-v="observer">NotificationCenter (3 listeners)</button></div>
+            </div>
+            <div class="ctl" style="justify-content:flex-end;"><button class="btn" id="od-run">downloader.finish() →</button></div>
+          </div>
+          <div class="console" id="od-console"><span class="arrow">›</span><span class="info">press run</span></div>
+        </div>
+      </div>
+      <p>The delegate pattern caps the audience at one by design — wiring up a second object to also receive <code class="inline">downloadDidFinish</code> means replacing the first, not adding to it.</p>
+    `
+  },
+
+  arc: {
+    eyebrow:"Chapter 05 · Structs, Classes & Protocols", title:"ARC & Memory Management",
+    lede:"Swift counts the strong references to every class instance. The moment that count hits zero, the instance is deallocated — no garbage collector pauses, but a strong reference cycle means the count never reaches zero at all.",
+    body:`
+      <h2>Two objects, each holding the other</h2>
+      <div class="codeblock"><div class="cb-head"><span class="dot2 r"></span><span class="dot2 y"></span><span class="dot2 g"></span><span class="fname">RetainCycle.swift</span></div>
+      <pre><span class="tk-kw">class</span> <span class="tk-type">Person</span> { <span class="tk-kw">var</span> apartment: <span class="tk-type">Apartment</span>? }
+<span class="tk-kw">class</span> <span class="tk-type">Apartment</span> { <span class="tk-kw">weak</span> <span class="tk-kw">var</span> tenant: <span class="tk-type">Person</span>? }  <span class="tk-com">// weak breaks the cycle</span>
+
+<span class="tk-kw">var</span> ada: <span class="tk-type">Person</span>? = <span class="tk-type">Person</span>()
+<span class="tk-kw">var</span> flat: <span class="tk-type">Apartment</span>? = <span class="tk-type">Apartment</span>()
+ada?.apartment = flat
+flat?.tenant = ada</pre></div>
+      <div class="rule"><span class="rule-ic">RULE OF THUMB</span><p>If a child needs to point back at its parent — a delegate, a closure capturing <code class="inline">self</code>, a child view model pointing at its container — make that back-reference <strong><code class="inline">weak</code></strong> (or <code class="inline">unowned</code> if it can never legitimately be nil). The "owning" direction stays strong; the "pointing back" direction doesn't.</p></div>
+      <h2>Watch the reference count, with and without weak</h2>
+      <div class="lab" id="lab-arc">
+        <div class="lab-head"><span class="ic">▣</span><span class="lab-title">Retain cycle simulator</span><span class="lab-hint">set both vars to nil, see who gets deallocated</span></div>
+        <div class="lab-body">
+          <div class="lab-controls">
+            <div class="ctl"><label>Apartment.tenant</label>
+              <div class="seg" id="arc-seg"><button data-v="weak" class="active">weak var</button><button data-v="strong">var (strong)</button></div>
+            </div>
+            <div class="ctl" style="justify-content:flex-end;"><button class="btn" id="arc-run">ada = nil; flat = nil →</button></div>
+            <div class="ctl" style="justify-content:flex-end;"><button class="btn secondary" id="arc-reset">reset</button></div>
+          </div>
+          <div class="two-col">
+            <div class="box-card"><h4>Person instance</h4><div class="val" id="arc-person" style="font-size:15px;">alive (refs: 1)</div></div>
+            <div class="box-card"><h4>Apartment instance</h4><div class="val" id="arc-apt" style="font-size:15px;">alive (refs: 1)</div></div>
+          </div>
+          <div class="console" id="arc-console" style="margin-top:12px;"><span class="arrow">›</span><span class="info">press run</span></div>
+        </div>
+      </div>
+      <p>With a strong <code class="inline">tenant</code>, both instances still hold a reference to each other after both local variables are cleared — neither count reaches zero, and both leak silently for the rest of the app's life.</p>
+    `
+  },
+
+  errorhandling: {
+    eyebrow:"Chapter 03 · Functions & Closures", title:"Error Handling",
+    lede:"A throwing function forces the caller to deal with failure at the call site — there's no silent null, no forgotten error code. How you choose to handle it is still up to you.",
+    body:`
+      <h2>Four ways to call a throwing function</h2>
+      <div class="codeblock"><div class="cb-head"><span class="dot2 r"></span><span class="dot2 y"></span><span class="dot2 g"></span><span class="fname">Errors.swift</span></div>
+      <pre><span class="tk-kw">enum</span> <span class="tk-type">ParseError</span>: <span class="tk-type">Error</span> { <span class="tk-kw">case</span> empty, malformed }
+
+<span class="tk-kw">func</span> <span class="tk-fn">parse</span>(_ s: <span class="tk-type">String</span>) <span class="tk-kw">throws</span> -&gt; <span class="tk-type">Int</span> {
+    <span class="tk-kw">guard</span> !s.isEmpty <span class="tk-kw">else</span> { <span class="tk-kw">throw</span> <span class="tk-type">ParseError</span>.empty }
+    <span class="tk-kw">guard</span> <span class="tk-kw">let</span> n = <span class="tk-type">Int</span>(s) <span class="tk-kw">else</span> { <span class="tk-kw">throw</span> <span class="tk-type">ParseError</span>.malformed }
+    <span class="tk-kw">return</span> n
+}
+
+<span class="tk-kw">try</span> parse(s)            <span class="tk-com">// propagate — caller must handle</span>
+<span class="tk-kw">try</span>? parse(s)           <span class="tk-com">// → Int?, error discarded to nil</span>
+<span class="tk-kw">try</span>! parse(s)           <span class="tk-com">// crashes if it throws</span></pre></div>
+      <div class="rule"><span class="rule-ic">RULE OF THUMB</span><p>Reach for <code class="inline">try?</code> only when you'd genuinely treat "it failed" and "it returned nil" identically. Reach for <code class="inline">try!</code> only when failure would mean a programmer error, not a runtime condition — e.g. force-unwrapping a bundled JSON file you control. Everywhere else, propagate with <code class="inline">try</code> and let the caller decide.</p></div>
+      <h2>Try each form against good and bad input</h2>
+      <div class="lab" id="lab-errorhandling">
+        <div class="lab-head"><span class="ic">▣</span><span class="lab-title">try / try? / try!</span><span class="lab-hint">parse(_:) on the input below</span></div>
+        <div class="lab-body">
+          <div class="lab-controls">
+            <div class="ctl"><label>input string</label><input type="text" id="eh-input" value="42" /></div>
+            <div class="ctl"><label>call form</label>
+              <div class="seg" id="eh-seg">
+                <button data-v="try" class="active">try parse(s)</button>
+                <button data-v="tryq">try? parse(s)</button>
+                <button data-v="tryb">try! parse(s)</button>
+              </div>
+            </div>
+            <div class="ctl" style="justify-content:flex-end;"><button class="btn" id="eh-run">run →</button></div>
+          </div>
+          <div class="console" id="eh-console"><span class="arrow">›</span><span class="info">press run</span></div>
+        </div>
+      </div>
+      <p>Set the input to <code class="inline">""</code> and switch forms: <code class="inline">try</code> requires a <code class="inline">catch</code> you write, <code class="inline">try?</code> quietly becomes <code class="inline">nil</code>, and <code class="inline">try!</code> is the one that actually crashes the program.</p>
+    `
+  },
+
+  generics: {
+    eyebrow:"Chapter 04 · Collections", title:"Generics",
+    lede:"A generic function or type is written once and works over any type that satisfies its constraints — the compiler generates the specialized version for you at each call site.",
+    body:`
+      <h2>One function, many concrete types</h2>
+      <div class="codeblock"><div class="cb-head"><span class="dot2 r"></span><span class="dot2 y"></span><span class="dot2 g"></span><span class="fname">Generics.swift</span></div>
+      <pre><span class="tk-kw">func</span> <span class="tk-fn">firstMatch</span>&lt;T: <span class="tk-type">Equatable</span>&gt;(<span class="tk-kw">in</span> items: [T], equalTo target: T) -&gt; T? {
+    <span class="tk-kw">for</span> item <span class="tk-kw">in</span> items <span class="tk-kw">where</span> item == target { <span class="tk-kw">return</span> item }
+    <span class="tk-kw">return</span> <span class="tk-kw">nil</span>
+}
+
+<span class="tk-fn">firstMatch</span>(in: [<span class="tk-num">1</span>,<span class="tk-num">2</span>,<span class="tk-num">3</span>], equalTo: <span class="tk-num">2</span>)        <span class="tk-com">// T == Int</span>
+<span class="tk-fn">firstMatch</span>(in: [<span class="tk-str">"a"</span>,<span class="tk-str">"b"</span>], equalTo: <span class="tk-str">"b"</span>)     <span class="tk-com">// T == String, same function</span></pre></div>
+      <div class="rule"><span class="rule-ic">RULE OF THUMB</span><p>Reach for a generic when you'd otherwise copy-paste the same function or type for <code class="inline">Int</code>, then <code class="inline">String</code>, then your own model. Constrain <code class="inline">T</code> to only the protocol you actually need (<code class="inline">Equatable</code>, <code class="inline">Comparable</code>, <code class="inline">Hashable</code>) rather than reaching for <code class="inline">Any</code>, which throws type safety away entirely.</p></div>
+      <h2>Run the same generic function over two element types</h2>
+      <div class="lab" id="lab-generics">
+        <div class="lab-head"><span class="ic">▣</span><span class="lab-title">firstMatch&lt;T: Equatable&gt;</span><span class="lab-hint">same function, T inferred from the call</span></div>
+        <div class="lab-body">
+          <div class="lab-controls">
+            <div class="ctl"><label>Collection</label>
+              <div class="seg" id="gen-seg">
+                <button data-v="ints" class="active">[1, 2, 3, 4]: [Int]</button>
+                <button data-v="strs">["fig","pear","kiwi"]: [String]</button>
+              </div>
+            </div>
+            <div class="ctl"><label>target</label><input type="text" id="gen-target" value="3" /></div>
+            <div class="ctl" style="justify-content:flex-end;"><button class="btn" id="gen-run">firstMatch(in:equalTo:) →</button></div>
+          </div>
+          <div class="console" id="gen-console"><span class="arrow">›</span><span class="info">press run</span></div>
+        </div>
+      </div>
+      <p>The body of <code class="inline">firstMatch</code> never changes between calls — only <code class="inline">T</code> does, inferred fresh each time from whatever array you pass in.</p>
+    `
+  },
+
+  extensionsaccess: {
+    eyebrow:"Chapter 05 · Structs, Classes & Protocols", title:"Extensions & Access Control",
+    lede:"Extensions let you add functionality to a type — even one you don't own — after the fact. Access control decides who outside the file or module is allowed to see what you added.",
+    body:`
+      <h2>Adding behavior to a type you don't own</h2>
+      <div class="codeblock"><div class="cb-head"><span class="dot2 r"></span><span class="dot2 y"></span><span class="dot2 g"></span><span class="fname">Extensions.swift</span></div>
+      <pre><span class="tk-kw">extension</span> <span class="tk-type">String</span> {
+    <span class="tk-kw">fileprivate</span> <span class="tk-kw">func</span> <span class="tk-fn">slugified</span>() -&gt; <span class="tk-type">String</span> {
+        lowercased().replacingOccurrences(of: <span class="tk-str">" "</span>, with: <span class="tk-str">"-"</span>)
+    }
+    <span class="tk-kw">public</span> <span class="tk-kw">var</span> isBlank: <span class="tk-type">Bool</span> { trimmingCharacters(in: .whitespaces).isEmpty }
+}</pre></div>
+      <div class="rule"><span class="rule-ic">RULE OF THUMB</span><p>Default to the <strong>narrowest</strong> access level that still compiles where it's used: <code class="inline">private</code> for helpers only your type touches, <code class="inline">fileprivate</code> for things shared across extensions in one file, <code class="inline">internal</code> (the default) for your module, and <code class="inline">public</code>/<code class="inline">open</code> only for the deliberate surface of a framework. Widening access later is easy; narrowing it after other code depends on it is a breaking change.</p></div>
+      <h2>Call slugified() from inside and outside the file</h2>
+      <div class="lab" id="lab-extensionsaccess">
+        <div class="lab-head"><span class="ic">▣</span><span class="lab-title">Access level checker</span><span class="lab-hint">same call, different caller location</span></div>
+        <div class="lab-body">
+          <div class="lab-controls">
+            <div class="ctl"><label>slugified() access level</label>
+              <div class="seg" id="ea-seg"><button data-v="fileprivate" class="active">fileprivate</button><button data-v="internal">internal</button></div>
+            </div>
+            <div class="ctl"><label>caller location</label>
+              <div class="seg" id="ea-caller"><button data-v="same" class="active">same file</button><button data-v="other">other file, same module</button></div>
+            </div>
+          </div>
+          <div class="console" id="ea-console"><span class="arrow">›</span><span class="info">"Hello World".slugified()</span></div>
+        </div>
+      </div>
+      <p>Flip the caller to "other file" with <code class="inline">fileprivate</code> still selected and the call stops compiling — the access level is enforced exactly where you'd expect, at the call site, not at runtime.</p>
+    `
+  },
+
+  opsio: {
+    eyebrow:"Chapter 01 · The Basics", title:"Operators, I/O & Unwrapping",
+    lede:"A handful of small mechanics get used constantly: arithmetic and comparison operators, comments, print, reading input, converting between types, and the shortest ways to deal with an optional.",
+    body:`
+      <h2>The everyday toolkit</h2>
+      <div class="codeblock"><div class="cb-head"><span class="dot2 r"></span><span class="dot2 y"></span><span class="dot2 g"></span><span class="fname">Basics2.swift</span></div>
+      <pre><span class="tk-com">// Operators</span>
+<span class="tk-kw">let</span> sum = <span class="tk-num">3</span> + <span class="tk-num">4</span> * <span class="tk-num">2</span>      <span class="tk-com">// 11 — * binds tighter than +</span>
+<span class="tk-kw">let</span> equal = (sum == <span class="tk-num">11</span>)      <span class="tk-com">// comparison → Bool</span>
+
+<span class="tk-com">// Comments</span>
+<span class="tk-com">// a single-line comment</span>
+<span class="tk-com">/* a block comment */</span>
+
+<span class="tk-com">// Output and (rare, command-line) input</span>
+<span class="tk-fn">print</span>(<span class="tk-str">"sum is \\(sum)"</span>)
+<span class="tk-kw">let</span> line = readLine()      <span class="tk-com">// String? — nil if there's nothing to read</span>
+
+<span class="tk-com">// Type conversion is always explicit</span>
+<span class="tk-kw">let</span> n: <span class="tk-type">Int</span> = <span class="tk-num">5</span>
+<span class="tk-kw">let</span> d = <span class="tk-type">Double</span>(n)            <span class="tk-com">// 5.0 — no silent Int → Double here</span>
+<span class="tk-kw">let</span> s = <span class="tk-type">String</span>(n)            <span class="tk-com">// "5"</span></pre></div>
+      <h2>The four ways to deal with an optional</h2>
+      <div class="codeblock"><div class="cb-head"><span class="dot2 r"></span><span class="dot2 y"></span><span class="dot2 g"></span><span class="fname">Unwrapping.swift</span></div>
+      <pre><span class="tk-kw">var</span> name: <span class="tk-type">String</span>? = <span class="tk-str">"Ada"</span>
+
+<span class="tk-fn">print</span>(name!)                          <span class="tk-com">// force unwrap — crashes if nil</span>
+<span class="tk-kw">guard</span> <span class="tk-kw">let</span> n = name <span class="tk-kw">else</span> { <span class="tk-kw">return</span> }   <span class="tk-com">// guard let — exit early if nil</span>
+<span class="tk-kw">let</span> greeting = <span class="tk-str">"Hi, "</span> + (name ?? <span class="tk-str">"stranger"</span>)  <span class="tk-com">// ?? nil-coalescing — fall back to a default</span>
+<span class="tk-kw">let</span> upper = name?.uppercased()      <span class="tk-com">// optional chaining — nil short-circuits, no crash</span></pre></div>
+      <h2>Pick a strategy, see how nil is handled</h2>
+      <div class="lab" id="lab-opsio">
+        <div class="lab-head"><span class="ic">▣</span><span class="lab-title">Unwrap strategy</span><span class="lab-hint">name: String?</span></div>
+        <div class="lab-body">
+          <div class="lab-controls">
+            <div class="ctl"><label>name</label>
+              <div class="seg" id="opsio-seg"><button data-v="value" class="active">"Ada"</button><button data-v="nil">nil</button></div>
+            </div>
+            <div class="ctl"><label>strategy</label>
+              <div class="seg" id="opsio-strat">
+                <button data-v="force" class="active">name!</button>
+                <button data-v="guard">guard let</button>
+                <button data-v="coalesce">name ?? "stranger"</button>
+                <button data-v="chain">name?.uppercased()</button>
+              </div>
+            </div>
+          </div>
+          <div class="console" id="opsio-console"><span class="arrow">›</span><span class="info">press a strategy</span></div>
+        </div>
+      </div>
+      <p>Only <code class="inline">name!</code> can crash. Every other strategy on this list was designed specifically so nil never reaches a runtime trap.</p>
+    `
+  },
+
+  guardternary: {
+    eyebrow:"Chapter 02 · Control Flow", title:"guard, Ternary & Loop Control",
+    lede:"guard inverts an if check to bail out early when a condition fails. The ternary operator packs a tiny if/else into one expression. break and continue redirect a loop mid-flight.",
+    body:`
+      <h2>Bail early instead of nesting deep</h2>
+      <div class="codeblock"><div class="cb-head"><span class="dot2 r"></span><span class="dot2 y"></span><span class="dot2 g"></span><span class="fname">GuardAndTernary.swift</span></div>
+      <pre><span class="tk-kw">func</span> <span class="tk-fn">describe</span>(age: <span class="tk-type">Int</span>?) -&gt; <span class="tk-type">String</span> {
+    <span class="tk-kw">guard</span> <span class="tk-kw">let</span> age, age &gt;= <span class="tk-num">0</span> <span class="tk-kw">else</span> { <span class="tk-kw">return</span> <span class="tk-str">"unknown"</span> }
+    <span class="tk-kw">return</span> age &gt;= <span class="tk-num">18</span> ? <span class="tk-str">"adult"</span> : <span class="tk-str">"minor"</span>   <span class="tk-com">// ternary: condition ? a : b</span>
+}
+
+<span class="tk-kw">var</span> total = <span class="tk-num">0</span>
+<span class="tk-kw">for</span> n <span class="tk-kw">in</span> <span class="tk-num">1</span>...<span class="tk-num">10</span> {
+    <span class="tk-kw">if</span> n == <span class="tk-num">5</span> { <span class="tk-kw">continue</span> }   <span class="tk-com">// skip 5, keep going</span>
+    <span class="tk-kw">if</span> n == <span class="tk-num">8</span> { <span class="tk-kw">break</span> }      <span class="tk-com">// stop entirely at 8</span>
+    total += n
+}</pre></div>
+      <p>A <code class="inline">while</code> loop checks its condition before each pass; a <code class="inline">repeat-while</code> runs the body once <em>first</em>, then checks — useful when you always want at least one iteration.</p>
+      <h2>Walk the loop and watch total accumulate</h2>
+      <div class="lab" id="lab-guardternary">
+        <div class="lab-head"><span class="ic">▣</span><span class="lab-title">continue / break tracer</span><span class="lab-hint">1...10, skip 5, stop at 8</span></div>
+        <div class="lab-body">
+          <div class="lab-controls">
+            <div class="ctl" style="justify-content:flex-end;"><button class="btn" id="gt-run">run loop →</button></div>
+          </div>
+          <div class="tape" id="gt-tape"></div>
+          <div class="console" id="gt-console"><span class="arrow">›</span><span class="info">total = 0</span></div>
+        </div>
+      </div>
+    `
+  },
+
+  paramshof: {
+    eyebrow:"Chapter 03 · Functions & Closures", title:"Parameters, Closures & Higher-Order Funcs",
+    lede:"A parameter can have a different name for the caller than the one used inside the function, can have a default, can accept any number of values, and — with inout — can be modified in place by the function it's passed to.",
+    body:`
+      <h2>Naming, defaults, variadics, and inout</h2>
+      <div class="codeblock"><div class="cb-head"><span class="dot2 r"></span><span class="dot2 y"></span><span class="dot2 g"></span><span class="fname">Parameters.swift</span></div>
+      <pre><span class="tk-kw">func</span> <span class="tk-fn">greet</span>(to name: <span class="tk-type">String</span>, loudly: <span class="tk-type">Bool</span> = <span class="tk-kw">false</span>) -&gt; <span class="tk-type">String</span> {
+    <span class="tk-com">// caller writes "to:", body reads "name" — external vs internal name</span>
+    loudly ? name.uppercased() : name
+}
+<span class="tk-fn">greet</span>(to: <span class="tk-str">"Ada"</span>)                 <span class="tk-com">// loudly defaults to false</span>
+
+<span class="tk-kw">func</span> <span class="tk-fn">sum</span>(_ numbers: <span class="tk-type">Int</span>...) -&gt; <span class="tk-type">Int</span> { numbers.reduce(<span class="tk-num">0</span>, +) }  <span class="tk-com">// variadic</span>
+<span class="tk-fn">sum</span>(<span class="tk-num">1</span>, <span class="tk-num">2</span>, <span class="tk-num">3</span>, <span class="tk-num">4</span>)
+
+<span class="tk-kw">func</span> <span class="tk-fn">double</span>(_ x: <span class="tk-kw">inout</span> <span class="tk-type">Int</span>) { x *= <span class="tk-num">2</span> }   <span class="tk-com">// modifies the caller's variable</span>
+<span class="tk-kw">var</span> score = <span class="tk-num">5</span>
+<span class="tk-fn">double</span>(&score)                     <span class="tk-com">// score is now 10</span>
+
+<span class="tk-kw">func</span> <span class="tk-fn">apply</span>(_ x: <span class="tk-type">Int</span>, _ transform: (<span class="tk-type">Int</span>) -&gt; <span class="tk-type">Int</span>) -&gt; <span class="tk-type">Int</span> {
+    <span class="tk-kw">func</span> <span class="tk-fn">log</span>(_ v: <span class="tk-type">Int</span>) { <span class="tk-fn">print</span>(<span class="tk-str">"got \\(v)"</span>) }   <span class="tk-com">// nested function, private to apply</span>
+    <span class="tk-fn">log</span>(x)
+    <span class="tk-kw">return</span> transform(x)              <span class="tk-com">// transform: a closure passed in — higher-order</span>
+}
+<span class="tk-fn">apply</span>(<span class="tk-num">4</span>) { $0 * $0 }              <span class="tk-com">// trailing closure shorthand</span></pre></div>
+      <h2>Mutate a variable through inout</h2>
+      <div class="lab" id="lab-paramshof">
+        <div class="lab-head"><span class="ic">▣</span><span class="lab-title">inout in action</span><span class="lab-hint">double(&score)</span></div>
+        <div class="lab-body">
+          <div class="lab-controls">
+            <div class="ctl"><label>score</label><input type="number" id="hof-score" value="5" style="width:90px;" /></div>
+            <div class="ctl" style="justify-content:flex-end;"><button class="btn" id="hof-run">double(&score) →</button></div>
+          </div>
+          <div class="console" id="hof-console"><span class="arrow">›</span><span class="info">press run</span></div>
+        </div>
+      </div>
+      <p>Without <code class="inline">inout</code>, <code class="inline">double</code> would only get a copy and the caller's <code class="inline">score</code> would never change — <code class="inline">&score</code> is what lets the function reach back and modify the original.</p>
+    `
+  },
+
+  sets: {
+    eyebrow:"Chapter 04 · Collections", title:"Sets & Transformations",
+    lede:"A Set stores unique values with no defined order, and answers membership and overlap questions in constant time — questions an Array can only answer by scanning every element.",
+    body:`
+      <h2>Uniqueness and set algebra</h2>
+      <div class="codeblock"><div class="cb-head"><span class="dot2 r"></span><span class="dot2 y"></span><span class="dot2 g"></span><span class="fname">Sets.swift</span></div>
+      <pre><span class="tk-kw">var</span> tags: <span class="tk-type">Set</span>&lt;<span class="tk-type">String</span>&gt; = [<span class="tk-str">"swift"</span>, <span class="tk-str">"ios"</span>, <span class="tk-str">"swift"</span>]   <span class="tk-com">// duplicate dropped: 2 elements</span>
+<span class="tk-kw">let</span> popular: <span class="tk-type">Set</span> = [<span class="tk-str">"swift"</span>, <span class="tk-str">"kotlin"</span>]
+
+tags.contains(<span class="tk-str">"ios"</span>)              <span class="tk-com">// true, O(1)</span>
+tags.intersection(popular)         <span class="tk-com">// {"swift"}</span>
+tags.union(popular)                <span class="tk-com">// {"swift", "ios", "kotlin"}</span></pre></div>
+      <h2>Try a few membership and algebra operations</h2>
+      <div class="lab" id="lab-sets">
+        <div class="lab-head"><span class="ic">▣</span><span class="lab-title">Set operations</span><span class="lab-hint">tags = {"swift", "ios"}, popular = {"swift", "kotlin"}</span></div>
+        <div class="lab-body">
+          <div class="lab-controls">
+            <div class="ctl"><label>Operation</label>
+              <div class="seg" id="sets-seg">
+                <button data-v="contains" class="active">tags.contains("ios")</button>
+                <button data-v="intersection">tags.intersection(popular)</button>
+                <button data-v="union">tags.union(popular)</button>
+              </div>
+            </div>
+          </div>
+          <div class="console" id="sets-console"><span class="arrow">›</span><span class="info">pick an operation</span></div>
+        </div>
+      </div>
+      <p>Arrays and dictionaries both support the same transformation pipeline — <code class="inline">map</code>, <code class="inline">filter</code>, <code class="inline">sorted</code> — covered in full in the Functional Programming chapter.</p>
+    `
+  },
+
+  propsmethods: {
+    eyebrow:"Chapter 05 · Structs, Classes & Protocols", title:"Properties, Methods & Initializers",
+    lede:"A stored property holds a value directly. A computed property recalculates its value from other state every time it's read. An initializer's job is to make sure every stored property has a value before the instance is used.",
+    body:`
+      <h2>Stored, computed, and the init that ties them together</h2>
+      <div class="codeblock"><div class="cb-head"><span class="dot2 r"></span><span class="dot2 y"></span><span class="dot2 g"></span><span class="fname">Rectangle.swift</span></div>
+      <pre><span class="tk-kw">struct</span> <span class="tk-type">Rectangle</span> {
+    <span class="tk-kw">var</span> width: <span class="tk-type">Double</span>      <span class="tk-com">// stored</span>
+    <span class="tk-kw">var</span> height: <span class="tk-type">Double</span>     <span class="tk-com">// stored</span>
+
+    <span class="tk-kw">var</span> area: <span class="tk-type">Double</span> { width * height }   <span class="tk-com">// computed — recalculated on every read</span>
+
+    <span class="tk-kw">init</span>(width: <span class="tk-type">Double</span>, height: <span class="tk-type">Double</span>) {
+        <span class="tk-kw">self</span>.width = width
+        <span class="tk-kw">self</span>.height = height
+    }
+
+    <span class="tk-kw">func</span> <span class="tk-fn">scaled</span>(by factor: <span class="tk-type">Double</span>) -&gt; <span class="tk-type">Rectangle</span> {
+        <span class="tk-type">Rectangle</span>(width: width * factor, height: height * factor)
+    }
+}</pre></div>
+      <h2>Change width and height, watch area follow</h2>
+      <div class="lab" id="lab-propsmethods">
+        <div class="lab-head"><span class="ic">▣</span><span class="lab-title">Stored vs computed</span><span class="lab-hint">area is never stored — it's recomputed</span></div>
+        <div class="lab-body">
+          <div class="lab-controls">
+            <div class="ctl"><label>width</label><input type="number" id="pm-w" value="4" style="width:80px;" /></div>
+            <div class="ctl"><label>height</label><input type="number" id="pm-h" value="3" style="width:80px;" /></div>
+            <div class="ctl" style="justify-content:flex-end;"><button class="btn" id="pm-run">Rectangle(width:height:) →</button></div>
+          </div>
+          <div class="console" id="pm-console"><span class="arrow">›</span><span class="info">area = 12.0</span></div>
+        </div>
+      </div>
+    `
+  },
+
+  enumadvanced: {
+    eyebrow:"Chapter 06 · Enumerations", title:"Raw & Associated Values",
+    lede:"A raw value gives every case a fixed underlying value, fixed at compile time. An associated value lets each case carry its own unique data, attached fresh at the moment that case is created.",
+    body:`
+      <h2>Two different ways for a case to carry data</h2>
+      <div class="codeblock"><div class="cb-head"><span class="dot2 r"></span><span class="dot2 y"></span><span class="dot2 g"></span><span class="fname">RawAndAssociated.swift</span></div>
+      <pre><span class="tk-kw">enum</span> <span class="tk-type">StatusCode</span>: <span class="tk-type">Int</span> { <span class="tk-kw">case</span> ok = <span class="tk-num">200</span>, notFound = <span class="tk-num">404</span> }
+<span class="tk-type">StatusCode</span>.ok.rawValue          <span class="tk-com">// 200, fixed by the enum itself</span>
+
+<span class="tk-kw">enum</span> <span class="tk-type">NetworkResult</span> {
+    <span class="tk-kw">case</span> success(<span class="tk-type">String</span>)
+    <span class="tk-kw">case</span> failure(code: <span class="tk-type">Int</span>, message: <span class="tk-type">String</span>)
+}
+
+<span class="tk-kw">let</span> result = <span class="tk-type">NetworkResult</span>.failure(code: <span class="tk-num">404</span>, message: <span class="tk-str">"Not Found"</span>)
+<span class="tk-kw">switch</span> result {
+<span class="tk-kw">case</span> .success(<span class="tk-kw">let</span> body): <span class="tk-fn">print</span>(body)
+<span class="tk-kw">case</span> .failure(<span class="tk-kw">let</span> code, <span class="tk-kw">let</span> msg): <span class="tk-fn">print</span>(<span class="tk-str">"\\(code): \\(msg)"</span>)
+}
+
+<span class="tk-kw">indirect</span> <span class="tk-kw">enum</span> <span class="tk-type">Expr</span> {                 <span class="tk-com">// recursive — refers to itself</span>
+    <span class="tk-kw">case</span> number(<span class="tk-type">Int</span>)
+    <span class="tk-kw">case</span> add(<span class="tk-type">Expr</span>, <span class="tk-type">Expr</span>)
+}</pre></div>
+      <h2>Match a NetworkResult and pull out its payload</h2>
+      <div class="lab" id="lab-enumadvanced">
+        <div class="lab-head"><span class="ic">▣</span><span class="lab-title">Pattern matching on associated values</span><span class="lab-hint">pick a case</span></div>
+        <div class="lab-body">
+          <div class="lab-controls">
+            <div class="ctl"><label>NetworkResult</label>
+              <div class="seg" id="ea2-seg"><button data-v="success" class="active">.success("Loaded!")</button><button data-v="failure">.failure(404, "Not Found")</button></div>
+            </div>
+          </div>
+          <div class="console" id="ea2-console"><span class="arrow">›</span><span class="info">pick a case</span></div>
+        </div>
+      </div>
+      <p>A recursive enum like <code class="inline">Expr</code> needs <code class="inline">indirect</code> because, without it, the compiler couldn't know the fixed size of a type that contains itself.</p>
+    `
+  },
+
+  taskgroups: {
+    eyebrow:"Chapter 07 · Concurrency", title:"Task Groups, MainActor & Async Sequences",
+    lede:"A single await runs one async operation. A task group runs many at once and waits for all of them — structured so the whole group is cancelled together if you walk away from it.",
+    body:`
+      <h2>Fan out, then collect every result</h2>
+      <div class="codeblock"><div class="cb-head"><span class="dot2 r"></span><span class="dot2 y"></span><span class="dot2 g"></span><span class="fname">TaskGroups.swift</span></div>
+      <pre><span class="tk-kw">let</span> images = <span class="tk-kw">await</span> <span class="tk-kw">withTaskGroup</span>(of: <span class="tk-type">UIImage</span>.<span class="tk-kw">self</span>) { group <span class="tk-kw">in</span>
+    <span class="tk-kw">for</span> url <span class="tk-kw">in</span> urls {
+        group.addTask { <span class="tk-kw">await</span> <span class="tk-fn">download</span>(url) }   <span class="tk-com">// all run concurrently</span>
+    }
+    <span class="tk-kw">var</span> results: [<span class="tk-type">UIImage</span>] = []
+    <span class="tk-kw">for</span> <span class="tk-kw">await</span> image <span class="tk-kw">in</span> group { results.append(image) }
+    <span class="tk-kw">return</span> results
+}
+
+<span class="tk-kw">@MainActor</span>
+<span class="tk-kw">func</span> <span class="tk-fn">updateUI</span>(with image: <span class="tk-type">UIImage</span>) { imageView.image = image }  <span class="tk-com">// always runs on the main thread</span>
+
+<span class="tk-kw">for</span> <span class="tk-kw">try</span> <span class="tk-kw">await</span> line <span class="tk-kw">in</span> url.lines {           <span class="tk-com">// AsyncSequence — values arrive over time</span>
+    <span class="tk-fn">print</span>(line)
+}</pre></div>
+      <p><code class="inline">@MainActor</code> is just a specific, built-in actor — every call into an <code class="inline">@MainActor</code> function is automatically routed to the main thread, which is exactly where UIKit and SwiftUI expect to be touched.</p>
+      <h2>Run three downloads concurrently and watch them complete out of order</h2>
+      <div class="lab" id="lab-taskgroups">
+        <div class="lab-head"><span class="ic">▣</span><span class="lab-title">withTaskGroup simulator</span><span class="lab-hint">3 tasks, random completion order</span></div>
+        <div class="lab-body">
+          <div class="lab-controls">
+            <div class="ctl" style="justify-content:flex-end;"><button class="btn" id="tg-run">await group of 3 →</button></div>
+          </div>
+          <div class="tape" id="tg-tape"></div>
+          <div class="console" id="tg-console"><span class="arrow">›</span><span class="info">press run</span></div>
+        </div>
+      </div>
+    `
+  },
+
+  coordinatordi: {
+    eyebrow:"Chapter 12 · Design Patterns", title:"Coordinator & Dependency Injection",
+    lede:"A Coordinator pulls navigation logic out of view controllers, so a screen doesn't need to know what comes after it. Dependency injection hands a type its dependencies from outside, rather than letting it reach out and grab them.",
+    body:`
+      <h2>Who decides what's next, and who hands you your tools</h2>
+      <div class="codeblock"><div class="cb-head"><span class="dot2 r"></span><span class="dot2 y"></span><span class="dot2 g"></span><span class="fname">CoordinatorAndDI.swift</span></div>
+      <pre><span class="tk-kw">protocol</span> <span class="tk-type">Coordinator</span> { <span class="tk-kw">func</span> <span class="tk-fn">start</span>() }
+
+<span class="tk-kw">class</span> <span class="tk-type">LoginCoordinator</span>: <span class="tk-type">Coordinator</span> {
+    <span class="tk-kw">func</span> <span class="tk-fn">start</span>() { <span class="tk-com">/* push LoginVC, decide what's next on success */</span> }
+}
+
+<span class="tk-com">// Dependency injection: the service is passed in, not created internally</span>
+<span class="tk-kw">class</span> <span class="tk-type">ProfileViewModel</span> {
+    <span class="tk-kw">let</span> api: <span class="tk-type">APIClientProtocol</span>
+    <span class="tk-kw">init</span>(api: <span class="tk-type">APIClientProtocol</span>) { <span class="tk-kw">self</span>.api = api }   <span class="tk-com">// a fake api can be injected in tests</span>
+}</pre></div>
+      <h2>Swap a real dependency for a fake one</h2>
+      <div class="lab" id="lab-coordinatordi">
+        <div class="lab-head"><span class="ic">▣</span><span class="lab-title">Injected dependency</span><span class="lab-hint">ProfileViewModel(api:)</span></div>
+        <div class="lab-body">
+          <div class="lab-controls">
+            <div class="ctl"><label>injected api</label>
+              <div class="seg" id="di-seg"><button data-v="live" class="active">LiveAPIClient()</button><button data-v="mock">MockAPIClient()</button></div>
+            </div>
+            <div class="ctl" style="justify-content:flex-end;"><button class="btn" id="di-run">viewModel.api.fetchProfile() →</button></div>
+          </div>
+          <div class="console" id="di-console"><span class="arrow">›</span><span class="info">press run</span></div>
+        </div>
+      </div>
+      <p>The view model never branches on which kind of <code class="inline">api</code> it has — that's the entire benefit. Tests inject a mock that returns instantly with canned data; production injects the real network client.</p>
+    `
+  },
+
+  stringsdeep: {
+    eyebrow:"Chapter 13 · Strings", title:"Strings, Indices & Regex",
+    lede:"A Swift String is a collection of grapheme clusters, not raw bytes — so a single visible character, like an emoji built from multiple Unicode scalars, still counts as exactly one. That guarantee is also why you can't index a string with a plain Int.",
+    body:`
+      <h2>Why string[3] doesn't compile</h2>
+      <div class="codeblock"><div class="cb-head"><span class="dot2 r"></span><span class="dot2 y"></span><span class="dot2 g"></span><span class="fname">Strings.swift</span></div>
+      <pre><span class="tk-kw">let</span> name = <span class="tk-str">"Ada"</span>
+<span class="tk-kw">let</span> greeting = <span class="tk-str">"Hello, \\(name)!"</span>          <span class="tk-com">// interpolation</span>
+
+<span class="tk-kw">let</span> idx = greeting.index(greeting.startIndex, offsetBy: <span class="tk-num">7</span>)
+greeting[idx]                                <span class="tk-com">// 'A' — String.Index, not Int</span>
+
+<span class="tk-kw">let</span> word: <span class="tk-type">Substring</span> = greeting.dropFirst(<span class="tk-num">7</span>).dropLast()  <span class="tk-com">// shares storage with greeting</span>
+
+<span class="tk-kw">if</span> <span class="tk-kw">let</span> match = greeting.firstMatch(of: <span class="tk-kw">/[A-Z][a-z]+/</span>) {
+    <span class="tk-fn">print</span>(match.<span class="tk-num">0</span>)                            <span class="tk-com">// Swift Regex literal</span>
+}</pre></div>
+      <h2>Find where a substring starts</h2>
+      <div class="lab" id="lab-stringsdeep">
+        <div class="lab-head"><span class="ic">▣</span><span class="lab-title">String indices</span><span class="lab-hint">"Hello, Ada!"</span></div>
+        <div class="lab-body">
+          <div class="lab-controls">
+            <div class="ctl"><label>offset from startIndex</label><input type="range" id="sd-range" min="0" max="10" value="7" /></div>
+          </div>
+          <div class="console" id="sd-console"><span class="arrow">›</span><span class="ok">greeting[idx] == "A"</span></div>
+        </div>
+      </div>
+      <p>A <code class="inline">Substring</code> is a view into the original string's memory, not a copy — convert it to a full <code class="inline">String</code> once you're going to store it past the original string's lifetime.</p>
+    `
+  },
+
+  funcprog: {
+    eyebrow:"Chapter 14 · Functional Programming", title:"map, filter, reduce & friends",
+    lede:"These eight methods cover almost every transformation you'll ever do to a collection — each one takes a closure and returns a new collection or value, leaving the original untouched.",
+    body:`
+      <h2>The functional toolkit, in one place</h2>
+      <div class="codeblock"><div class="cb-head"><span class="dot2 r"></span><span class="dot2 y"></span><span class="dot2 g"></span><span class="fname">Functional.swift</span></div>
+      <pre><span class="tk-kw">let</span> nums = [<span class="tk-num">1</span>, <span class="tk-num">2</span>, <span class="tk-num">3</span>, <span class="tk-num">4</span>, <span class="tk-num">5</span>]
+
+nums.map { $0 * <span class="tk-num">2</span> }                       <span class="tk-com">// [2, 4, 6, 8, 10]</span>
+nums.filter { $0 % <span class="tk-num">2</span> == <span class="tk-num">0</span> }                 <span class="tk-com">// [2, 4]</span>
+nums.reduce(<span class="tk-num">0</span>, +)                        <span class="tk-com">// 15</span>
+nums.forEach { <span class="tk-fn">print</span>($0) }                  <span class="tk-com">// side effect, no return value</span>
+nums.sorted(by: &gt;)                       <span class="tk-com">// [5, 4, 3, 2, 1]</span>
+
+<span class="tk-kw">let</span> raw = [<span class="tk-str">"1"</span>, <span class="tk-str">"two"</span>, <span class="tk-str">"3"</span>]
+raw.compactMap { <span class="tk-type">Int</span>($0) }                  <span class="tk-com">// [1, 3] — nils dropped</span>
+
+<span class="tk-kw">let</span> nested = [[<span class="tk-num">1</span>,<span class="tk-num">2</span>], [<span class="tk-num">3</span>,<span class="tk-num">4</span>]]
+nested.flatMap { $0 }                     <span class="tk-com">// [1, 2, 3, 4] — one flat array</span>
+
+<span class="tk-fn">zip</span>([<span class="tk-str">"a"</span>,<span class="tk-str">"b"</span>], [<span class="tk-num">1</span>,<span class="tk-num">2</span>]).map { <span class="tk-str">"\\($0)\\($1)"</span> }   <span class="tk-com">// ["a1", "b2"]</span></pre></div>
+      <h2>Chain them and watch each stage's output</h2>
+      <div class="lab" id="lab-funcprog">
+        <div class="lab-head"><span class="ic">▣</span><span class="lab-title">Method picker</span><span class="lab-hint">nums = [1, 2, 3, 4, 5]</span></div>
+        <div class="lab-body">
+          <div class="lab-controls">
+            <div class="ctl"><label>Method</label>
+              <div class="seg" id="fp-seg">
+                <button data-v="map" class="active">map { $0 * 2 }</button>
+                <button data-v="filter">filter { even }</button>
+                <button data-v="reduce">reduce(0, +)</button>
+                <button data-v="sorted">sorted(by: &gt;)</button>
+                <button data-v="compactMap">compactMap on ["1","two","3"]</button>
+              </div>
+            </div>
+          </div>
+          <div class="console" id="fp-console"><span class="arrow">›</span><span class="info">pick a method</span></div>
+        </div>
+      </div>
+    `
+  },
+
+  inheritance: {
+    eyebrow:"Chapter 15 · Object-Oriented Programming", title:"Inheritance, Polymorphism & Static Members",
+    lede:"A subclass inherits everything its superclass has and can override specific behavior. Calling that overridden method through a superclass-typed reference is polymorphism — the right version still runs.",
+    body:`
+      <h2>One call, the subclass's version runs</h2>
+      <div class="codeblock"><div class="cb-head"><span class="dot2 r"></span><span class="dot2 y"></span><span class="dot2 g"></span><span class="fname">Inheritance.swift</span></div>
+      <pre><span class="tk-kw">class</span> <span class="tk-type">Animal</span> {
+    <span class="tk-kw">static</span> <span class="tk-kw">let</span> kingdom = <span class="tk-str">"Animalia"</span>   <span class="tk-com">// one copy, shared by every instance and subclass</span>
+    <span class="tk-kw">func</span> <span class="tk-fn">speak</span>() -&gt; <span class="tk-type">String</span> { <span class="tk-str">"..."</span> }
+}
+<span class="tk-kw">final</span> <span class="tk-kw">class</span> <span class="tk-type">Dog</span>: <span class="tk-type">Animal</span> {              <span class="tk-com">// final: nothing can subclass Dog</span>
+    <span class="tk-kw">override</span> <span class="tk-kw">func</span> <span class="tk-fn">speak</span>() -&gt; <span class="tk-type">String</span> { <span class="tk-str">"Woof!"</span> }
+}
+
+<span class="tk-kw">let</span> animals: [<span class="tk-type">Animal</span>] = [<span class="tk-type">Animal</span>(), <span class="tk-type">Dog</span>()]
+<span class="tk-kw">for</span> a <span class="tk-kw">in</span> animals { <span class="tk-fn">print</span>(a.speak()) }   <span class="tk-com">// "...", then "Woof!" — polymorphism</span></pre></div>
+      <h2>Call speak() through the Animal-typed reference</h2>
+      <div class="lab" id="lab-inheritance">
+        <div class="lab-head"><span class="ic">▣</span><span class="lab-title">Polymorphic dispatch</span><span class="lab-hint">the static type is Animal either way</span></div>
+        <div class="lab-body">
+          <div class="lab-controls">
+            <div class="ctl"><label>Runtime type</label>
+              <div class="seg" id="inh-seg"><button data-v="Animal" class="active">Animal()</button><button data-v="Dog">Dog()</button></div>
+            </div>
+            <div class="ctl" style="justify-content:flex-end;"><button class="btn" id="inh-run">a.speak() →</button></div>
+          </div>
+          <div class="console" id="inh-console"><span class="arrow">›</span><span class="info">press run</span></div>
+        </div>
+      </div>
+      <p>Swift picks which <code class="inline">speak()</code> to run based on the object's actual runtime type, never the type the variable was declared with — that's what makes the loop above print two different lines.</p>
+    `
+  },
+
+  propflow: {
+    eyebrow:"Chapter 16 · Property Features & Advanced Flow", title:"Observers, Lazy, defer & Pattern Matching",
+    lede:"A property observer reacts the instant a value changes. lazy delays creation until first use. defer guarantees cleanup code runs no matter how a scope exits. where adds an extra condition onto a pattern.",
+    body:`
+      <h2>Four small mechanics, each solving one specific problem</h2>
+      <div class="codeblock"><div class="cb-head"><span class="dot2 r"></span><span class="dot2 y"></span><span class="dot2 g"></span><span class="fname">PropFlow.swift</span></div>
+      <pre><span class="tk-kw">class</span> <span class="tk-type">Account</span> {
+    <span class="tk-kw">var</span> balance = <span class="tk-num">0</span> {
+        didSet { <span class="tk-fn">print</span>(<span class="tk-str">"changed from \\(oldValue) to \\(balance)"</span>) }   <span class="tk-com">// property observer</span>
+    }
+    <span class="tk-kw">lazy</span> <span class="tk-kw">var</span> formatter = <span class="tk-type">NumberFormatter</span>()   <span class="tk-com">// built only on first access</span>
+}
+
+<span class="tk-kw">func</span> <span class="tk-fn">process</span>() {
+    <span class="tk-fn">print</span>(<span class="tk-str">"start"</span>)
+    <span class="tk-kw">defer</span> { <span class="tk-fn">print</span>(<span class="tk-str">"cleanup — always runs"</span>) }   <span class="tk-com">// runs at scope exit, even after a throw</span>
+    <span class="tk-fn">print</span>(<span class="tk-str">"work"</span>)
+}
+
+<span class="tk-kw">for</span> case <span class="tk-kw">let</span> n <span class="tk-kw">in</span> [<span class="tk-num">1</span>,<span class="tk-num">2</span>,<span class="tk-num">3</span>,<span class="tk-num">4</span>] <span class="tk-kw">where</span> n % <span class="tk-num">2</span> == <span class="tk-num">0</span> { <span class="tk-fn">print</span>(n) }  <span class="tk-com">// where narrows the match</span>
+
+<span class="tk-kw">if</span> <span class="tk-kw">#available</span>(iOS <span class="tk-num">17</span>, *) { <span class="tk-fn">useNewAPI</span>() } <span class="tk-kw">else</span> { <span class="tk-fn">useOldAPI</span>() }</pre></div>
+      <h2>Run process() and watch the order defer prints in</h2>
+      <div class="lab" id="lab-propflow">
+        <div class="lab-head"><span class="ic">▣</span><span class="lab-title">defer ordering</span><span class="lab-hint">defer always runs last, regardless of where it's written</span></div>
+        <div class="lab-body">
+          <div class="lab-controls">
+            <div class="ctl" style="justify-content:flex-end;"><button class="btn" id="pf-run">process() →</button></div>
+          </div>
+          <div class="tape" id="pf-tape"></div>
+        </div>
+      </div>
+      <p>Notice <code class="inline">defer</code> is written in the middle of the function but its message always prints last — it's tied to when the scope exits, not to its position in the source.</p>
+    `
+  },
+
+  networking: {
+    eyebrow:"Chapter 17 · Networking & Persistence", title:"URLSession, Codable & Local Storage",
+    lede:"URLSession fetches raw data over the network; Codable turns that raw JSON into a typed Swift struct in one call. Once you have a value, UserDefaults, FileManager, Keychain, and SwiftData each store it somewhere different, for different reasons.",
+    body:`
+      <h2>From bytes on the wire to a typed struct</h2>
+      <div class="codeblock"><div class="cb-head"><span class="dot2 r"></span><span class="dot2 y"></span><span class="dot2 g"></span><span class="fname">Networking.swift</span></div>
+      <pre><span class="tk-kw">struct</span> <span class="tk-type">User</span>: <span class="tk-type">Codable</span> { <span class="tk-kw">let</span> id: <span class="tk-type">Int</span>; <span class="tk-kw">let</span> name: <span class="tk-type">String</span> }
+
+<span class="tk-kw">let</span> (data, response) = <span class="tk-kw">try</span> <span class="tk-kw">await</span> <span class="tk-type">URLSession</span>.shared.<span class="tk-fn">data</span>(from: url)
+<span class="tk-kw">guard</span> <span class="tk-kw">let</span> http = response <span class="tk-kw">as</span>? <span class="tk-type">HTTPURLResponse</span>, http.statusCode == <span class="tk-num">200</span> <span class="tk-kw">else</span> {
+    <span class="tk-kw">throw</span> <span class="tk-type">URLError</span>(.badServerResponse)
+}
+<span class="tk-kw">let</span> user = <span class="tk-kw">try</span> <span class="tk-type">JSONDecoder</span>().decode(<span class="tk-type">User</span>.<span class="tk-kw">self</span>, from: data)
+
+<span class="tk-com">// Where to put it once you have it:</span>
+<span class="tk-type">UserDefaults</span>.standard.set(user.name, forKey: <span class="tk-str">"lastUser"</span>)   <span class="tk-com">// small preferences</span>
+<span class="tk-kw">try</span> data.write(to: <span class="tk-type">FileManager</span>.default.temporaryDirectory.appendingPathComponent(<span class="tk-str">"user.json"</span>))  <span class="tk-com">// files</span>
+<span class="tk-com">// Keychain → secrets/tokens.  SwiftData → @Model structured, queryable data.</span></pre></div>
+      <h2>Pick the right store for the right kind of data</h2>
+      <div class="lab" id="lab-networking">
+        <div class="lab-head"><span class="ic">▣</span><span class="lab-title">Where does it belong?</span><span class="lab-hint">match the data to its store</span></div>
+        <div class="lab-body">
+          <div class="lab-controls">
+            <div class="ctl"><label>Data</label>
+              <div class="seg" id="net-seg">
+                <button data-v="pref" class="active">"darkModeEnabled" = true</button>
+                <button data-v="token">OAuth access token</button>
+                <button data-v="model">queryable list of Recipes</button>
+                <button data-v="file">a downloaded PDF</button>
+              </div>
+            </div>
+          </div>
+          <div class="console" id="net-console"><span class="arrow">›</span><span class="info">pick a kind of data</span></div>
+        </div>
+      </div>
+    `
+  },
+
+  testingspm: {
+    eyebrow:"Chapter 18 · Testing & Tooling", title:"XCTest & Swift Package Manager",
+    lede:"XCTest is how Swift code proves it does what you think it does. Swift Package Manager is how that code — and its dependencies — gets organized, built, and shared as a reusable module.",
+    body:`
+      <h2>Asserting expected behavior</h2>
+      <div class="codeblock"><div class="cb-head"><span class="dot2 r"></span><span class="dot2 y"></span><span class="dot2 g"></span><span class="fname">CalculatorTests.swift</span></div>
+      <pre><span class="tk-kw">final</span> <span class="tk-kw">class</span> <span class="tk-type">CalculatorTests</span>: <span class="tk-type">XCTestCase</span> {
+    <span class="tk-kw">func</span> <span class="tk-fn">testAddition</span>() {
+        <span class="tk-kw">let</span> result = <span class="tk-type">Calculator</span>().add(<span class="tk-num">2</span>, <span class="tk-num">3</span>)
+        <span class="tk-type">XCTAssertEqual</span>(result, <span class="tk-num">5</span>)
+    }
+    <span class="tk-kw">func</span> <span class="tk-fn">testDivideByZeroThrows</span>() {
+        <span class="tk-type">XCTAssertThrowsError</span>(<span class="tk-kw">try</span> <span class="tk-type">Calculator</span>().divide(<span class="tk-num">1</span>, by: <span class="tk-num">0</span>))
+    }
+}</pre></div>
+      <p>A mock conforming to the same protocol as the real dependency — like in the Dependency Injection lesson — is what makes a unit test fast and deterministic instead of hitting a real network.</p>
+      <div class="codeblock"><div class="cb-head"><span class="dot2 r"></span><span class="dot2 y"></span><span class="dot2 g"></span><span class="fname">UITests.swift</span></div>
+      <pre><span class="tk-kw">final</span> <span class="tk-kw">class</span> <span class="tk-type">LoginUITests</span>: <span class="tk-type">XCTestCase</span> {
+    <span class="tk-kw">func</span> <span class="tk-fn">testLoginButtonAppears</span>() {
+        <span class="tk-kw">let</span> app = <span class="tk-type">XCUIApplication</span>()
+        app.<span class="tk-fn">launch</span>()
+        <span class="tk-type">XCTAssertTrue</span>(app.buttons[<span class="tk-str">"Log In"</span>].exists)   <span class="tk-com">// drives the real UI, not just the logic</span>
+    }
+}</pre></div>
+      <p>Unit tests call your code directly; <code class="inline">XCUIApplication</code> instead launches and taps through the actual running app, which is slower but catches problems unit tests can't — a button that's misspelled, missing, or unreachable.</p>
+      <div class="codeblock"><div class="cb-head"><span class="dot2 r"></span><span class="dot2 y"></span><span class="dot2 g"></span><span class="fname">Package.swift</span></div>
+      <pre><span class="tk-kw">let</span> package = <span class="tk-type">Package</span>(
+    name: <span class="tk-str">"NetworkKit"</span>,
+    products: [.library(name: <span class="tk-str">"NetworkKit"</span>, targets: [<span class="tk-str">"NetworkKit"</span>])],
+    dependencies: [.package(url: <span class="tk-str">"https://github.com/apple/swift-log"</span>, from: <span class="tk-str">"1.0.0"</span>)],
+    targets: [.target(name: <span class="tk-str">"NetworkKit"</span>, dependencies: [.product(name: <span class="tk-str">"Logging"</span>, package: <span class="tk-str">"swift-log"</span>)])]
+)</pre></div>
+      <h2>Run a test against good and bad input</h2>
+      <div class="lab" id="lab-testingspm">
+        <div class="lab-head"><span class="ic">▣</span><span class="lab-title">XCTAssert outcomes</span><span class="lab-hint">Calculator().divide(1, by: …)</span></div>
+        <div class="lab-body">
+          <div class="lab-controls">
+            <div class="ctl"><label>divisor</label><input type="number" id="ts-div" value="0" style="width:80px;" /></div>
+            <div class="ctl" style="justify-content:flex-end;"><button class="btn" id="ts-run">XCTAssertThrowsError →</button></div>
+          </div>
+          <div class="console" id="ts-console"><span class="arrow">›</span><span class="info">press run</span></div>
+        </div>
+      </div>
+    `
+  },
+
+  swiftuibasics: {
+    eyebrow:"Chapter 19 · SwiftUI Essentials", title:"Views, State, Bindings & Navigation",
+    lede:"A SwiftUI View is a struct describing what the screen should look like for a given piece of state — not a sequence of drawing commands. Change the state, and SwiftUI redraws only what actually depends on it.",
+    body:`
+      <h2>State drives the view, not the other way around</h2>
+      <div class="codeblock"><div class="cb-head"><span class="dot2 r"></span><span class="dot2 y"></span><span class="dot2 g"></span><span class="fname">CounterView.swift</span></div>
+      <pre><span class="tk-kw">struct</span> <span class="tk-type">CounterView</span>: <span class="tk-type">View</span> {
+    <span class="tk-kw">@State</span> <span class="tk-kw">private</span> <span class="tk-kw">var</span> count = <span class="tk-num">0</span>      <span class="tk-com">// owned by this view</span>
+
+    <span class="tk-kw">var</span> body: <span class="tk-kw">some</span> <span class="tk-type">View</span> {
+        <span class="tk-type">NavigationStack</span> {
+            <span class="tk-type">VStack</span> {
+                <span class="tk-type">Text</span>(<span class="tk-str">"Count: \\(count)"</span>)
+                <span class="tk-type">Stepper</span>(<span class="tk-str">"Adjust"</span>, value: $count)        <span class="tk-com">// $count is a Binding</span>
+                <span class="tk-type">NavigationLink</span>(<span class="tk-str">"Details"</span>) { <span class="tk-type">DetailView</span>(count: count) }
+            }
+            .padding()                                <span class="tk-com">// a modifier</span>
+        }
+    }
+}</pre></div>
+      <p><code class="inline">List</code> and <code class="inline">Form</code> both lay out rows of content automatically; <code class="inline">@Environment</code> and <code class="inline">@ObservedObject</code>/<code class="inline">@StateObject</code> let a deeply nested view read shared state without it being threaded through every initializer in between.</p>
+      <h2>Bump count through a Binding, watch the view's description update</h2>
+      <div class="lab" id="lab-swiftuibasics">
+        <div class="lab-head"><span class="ic">▣</span><span class="lab-title">@State / Binding</span><span class="lab-hint">Stepper writes through $count</span></div>
+        <div class="lab-body">
+          <div class="lab-controls">
+            <div class="ctl" style="justify-content:flex-end;"><button class="btn secondary" id="su-dec">− Stepper</button></div>
+            <div class="ctl" style="justify-content:flex-end;"><button class="btn" id="su-inc">+ Stepper</button></div>
+          </div>
+          <div class="console" id="su-console"><span class="arrow">›</span><span class="info">Text("Count: 0")</span></div>
+        </div>
+      </div>
+    `
+  },
+
+  advancedgrab: {
+    eyebrow:"Chapter 20 · Advanced Swift", title:"Opaque Types, Key Paths, Macros & More",
+    lede:"A handful of advanced features round out the language: some hides a concrete return type behind a stable interface, any erases it into a box, key paths reference a property without calling it, and macros generate code at compile time.",
+    body:`
+      <h2>some vs. any, and reaching into a property by reference</h2>
+      <div class="codeblock"><div class="cb-head"><span class="dot2 r"></span><span class="dot2 y"></span><span class="dot2 g"></span><span class="fname">AdvancedSwift.swift</span></div>
+      <pre><span class="tk-kw">func</span> <span class="tk-fn">makeView</span>() -&gt; <span class="tk-kw">some</span> <span class="tk-type">View</span> { <span class="tk-type">Text</span>(<span class="tk-str">"Hi"</span>) }     <span class="tk-com">// one fixed concrete type, known at compile time</span>
+<span class="tk-kw">let</span> shapes: [<span class="tk-kw">any</span> <span class="tk-type">Shape</span>] = [<span class="tk-type">Circle</span>(), <span class="tk-type">Square</span>()]   <span class="tk-com">// any: a box that can hold any conformer</span>
+
+<span class="tk-kw">struct</span> <span class="tk-type">Person</span> { <span class="tk-kw">var</span> name: <span class="tk-type">String</span> }
+<span class="tk-kw">let</span> nameKP = \\<span class="tk-type">Person</span>.name              <span class="tk-com">// a KeyPath, not a call</span>
+<span class="tk-kw">let</span> people = [<span class="tk-type">Person</span>(name: <span class="tk-str">"Ada"</span>), <span class="tk-type">Person</span>(name: <span class="tk-str">"Grace"</span>)]
+people.map(\\.name)                          <span class="tk-com">// ["Ada", "Grace"] — KeyPath as a function</span>
+
+<span class="tk-kw">@Observable</span> <span class="tk-com">// a macro — expands into observation boilerplate at compile time</span>
+<span class="tk-kw">class</span> <span class="tk-type">Settings</span> { <span class="tk-kw">var</span> darkMode = <span class="tk-kw">false</span> }
+
+<span class="tk-type">Mirror</span>(reflecting: people[<span class="tk-num">0</span>]).children.forEach { <span class="tk-fn">print</span>($0.label ?? <span class="tk-str">"?"</span>) }  <span class="tk-com">// reflection</span></pre></div>
+      <p>Unsafe pointers and <code class="inline">@objc</code> bridging exist for the same reason: sometimes Swift needs to talk directly to C memory or an Objective-C runtime that doesn't know about Swift's safety guarantees at all. <code class="inline">@dynamicMemberLookup</code> sits at the opposite end — a type can intercept <code class="inline">.anyPropertyName</code> at compile time and resolve it dynamically, which is how some JSON wrappers let you write <code class="inline">json.user.name</code> without declaring <code class="inline">user</code> or <code class="inline">name</code> anywhere.</p>
+      <h2>Pull a value out with a key path</h2>
+      <div class="lab" id="lab-advancedgrab">
+        <div class="lab-head"><span class="ic">▣</span><span class="lab-title">KeyPath lookup</span><span class="lab-hint">people.map(\\.____)</span></div>
+        <div class="lab-body">
+          <div class="lab-controls">
+            <div class="ctl"><label>KeyPath</label>
+              <div class="seg" id="ag-seg"><button data-v="name" class="active">\\.name</button><button data-v="count">\\.name.count</button></div>
+            </div>
+          </div>
+          <div class="console" id="ag-console"><span class="arrow">›</span><span class="info">pick a key path</span></div>
+        </div>
+      </div>
+    `
+  },
+
+  resultbuilderbasics: {
+    eyebrow:"Chapter 21 · Result Builders", title:"@resultBuilder & SwiftUI's DSL",
+    lede:"A result builder lets you write a sequence of expressions as if they were a list, and it quietly stitches them together behind the scenes. It's the mechanism that makes SwiftUI's body { } read like markup instead of a wall of function calls.",
+    body:`
+      <h2>What body { ... } actually compiles into</h2>
+      <div class="codeblock"><div class="cb-head"><span class="dot2 r"></span><span class="dot2 y"></span><span class="dot2 g"></span><span class="fname">ResultBuilder.swift</span></div>
+      <pre><span class="tk-kw">@resultBuilder</span>
+<span class="tk-kw">struct</span> <span class="tk-type">StringBuilder</span> {
+    <span class="tk-kw">static</span> <span class="tk-kw">func</span> <span class="tk-fn">buildBlock</span>(_ parts: <span class="tk-type">String</span>...) -&gt; <span class="tk-type">String</span> {
+        parts.joined(separator: <span class="tk-str">"\\n"</span>)
+    }
+}
+
+<span class="tk-kw">@StringBuilder</span>
+<span class="tk-kw">func</span> <span class="tk-fn">card</span>(name: <span class="tk-type">String</span>) -&gt; <span class="tk-type">String</span> {
+    <span class="tk-str">"Name: \\(name)"</span>
+    <span class="tk-str">"Status: active"</span>     <span class="tk-com">// each line is a separate expression, joined by buildBlock</span>
+}</pre></div>
+      <p>SwiftUI's <code class="inline">@ViewBuilder</code> works the same way: every line inside <code class="inline">body</code> is one expression, and the builder's <code class="inline">buildBlock</code> assembles them all into a single view tree — that's the entire trick behind <code class="inline">VStack { Text("Hi"); Text("Bye") }</code> not needing commas or an array.</p>
+      <h2>Add lines, watch the builder join them</h2>
+      <div class="lab" id="lab-resultbuilderbasics">
+        <div class="lab-head"><span class="ic">▣</span><span class="lab-title">StringBuilder DSL</span><span class="lab-hint">each "line" is its own expression</span></div>
+        <div class="lab-body">
+          <div class="lab-controls">
+            <div class="ctl"><label>line to add</label><input type="text" id="rb-line" value="Status: active" /></div>
+            <div class="ctl" style="justify-content:flex-end;"><button class="btn" id="rb-add">add line →</button></div>
+            <div class="ctl" style="justify-content:flex-end;"><button class="btn secondary" id="rb-reset">reset</button></div>
+          </div>
+          <div class="console" id="rb-console" style="white-space:pre-line;"><span class="arrow">›</span><span class="info">Name: Ada</span></div>
+        </div>
+      </div>
+      <p>Nothing here is special-cased by the compiler for SwiftUI specifically — <code class="inline">@resultBuilder</code> is a general feature, and SwiftUI is simply its most famous user.</p>
+    `
+  },
+
+  performancebasics: {
+    eyebrow:"Chapter 22 · Performance", title:"Value Semantics, COW & Profiling",
+    lede:"Copying a struct sounds expensive, but Swift's standard collections fake the copy until someone actually writes to it — and Instruments is how you find out whether your real bottleneck is even where you assumed it was.",
+    body:`
+      <h2>Copy-on-write: a copy that doesn't happen yet</h2>
+      <div class="codeblock"><div class="cb-head"><span class="dot2 r"></span><span class="dot2 y"></span><span class="dot2 g"></span><span class="fname">COW.swift</span></div>
+      <pre><span class="tk-kw">var</span> a = [<span class="tk-num">1</span>, <span class="tk-num">2</span>, <span class="tk-num">3</span>]
+<span class="tk-kw">var</span> b = a            <span class="tk-com">// no copy yet — both point at the same buffer</span>
+b.append(<span class="tk-num">4</span>)         <span class="tk-com">// NOW a real copy happens, because b is about to diverge from a</span>
+<span class="tk-com">// a == [1, 2, 3], b == [1, 2, 3, 4]</span></pre></div>
+      <p>Arrays, dictionaries, and sets are structs with value semantics, but their actual storage is a class underneath. Assignment just bumps a reference count; the expensive element-by-element copy is deferred until a mutation would otherwise affect two "different" values at once.</p>
+      <h2>When laziness pays off</h2>
+      <div class="codeblock"><div class="cb-head"><span class="dot2 r"></span><span class="dot2 y"></span><span class="dot2 g"></span><span class="fname">LazySequence.swift</span></div>
+      <pre><span class="tk-kw">let</span> result = (<span class="tk-num">1</span>...<span class="tk-num">1_000_000</span>)
+    .lazy
+    .map { $0 * <span class="tk-num">2</span> }
+    .first { $0 &gt; <span class="tk-num">10</span> }   <span class="tk-com">// stops after a handful of elements — map never touches the rest</span></pre></div>
+      <p>Without <code class="inline">.lazy</code>, <code class="inline">map</code> would eagerly transform all one million elements before <code class="inline">first</code> ever looked at one. With it, each element is only mapped right before it's checked, and the chain stops the instant a match is found.</p>
+      <h2>Mutate a shared array, watch when the copy actually fires</h2>
+      <div class="lab" id="lab-performancebasics">
+        <div class="lab-head"><span class="ic">▣</span><span class="lab-title">Copy-on-write tracer</span><span class="lab-hint">var b = a; then mutate b</span></div>
+        <div class="lab-body">
+          <div class="lab-controls">
+            <div class="ctl" style="justify-content:flex-end;"><button class="btn" id="cow-assign">var b = a →</button></div>
+            <div class="ctl" style="justify-content:flex-end;"><button class="btn" id="cow-mutate">b.append(4) →</button></div>
+            <div class="ctl" style="justify-content:flex-end;"><button class="btn secondary" id="cow-reset">reset</button></div>
+          </div>
+          <div class="two-col">
+            <div class="box-card"><h4>storage buffers</h4><div class="val" id="cow-buffers" style="font-size:14px;">1 buffer, shared by a &amp; b</div></div>
+            <div class="box-card"><h4>a / b</h4><div class="val" id="cow-vals" style="font-size:14px;">[1,2,3] / [1,2,3]</div></div>
+          </div>
+          <div class="console" id="cow-console" style="margin-top:12px;"><span class="arrow">›</span><span class="info">press a button</span></div>
+        </div>
+      </div>
+      <p>The assignment itself never copies anything — only the first mutation after sharing began does. Instruments' Time Profiler and Allocations tools are how you'd confirm this in a real app: a spike in retain/release traffic or unexpected buffer allocations right at a mutation, not at the assignment before it.</p>
+    `
+  },
+};
+
+/* ======================= INTERACTIVE LOGIC ======================= */
+function initInteractive(id){
+  const fn = INTERACTIONS[id];
+  if(fn) fn();
+}
+
+function setSeg(containerId, onChange){
+  const el = document.getElementById(containerId);
+  if(!el) return;
+  el.querySelectorAll("button").forEach(b=>{
+    b.addEventListener("click", ()=>{
+      el.querySelectorAll("button").forEach(x=>x.classList.remove("active"));
+      b.classList.add("active");
+      onChange(b.dataset.v);
+    });
+  });
+}
+
+const INTERACTIONS = {
+  vars(){
+    let kind = "let";
+    setSeg("vars-seg", v=>kind=v);
+    document.getElementById("vars-run").addEventListener("click", ()=>{
+      const val = document.getElementById("vars-input").value || "0";
+      const console_ = document.getElementById("vars-console");
+      if(kind === "let"){
+        console_.innerHTML = `<span class="arrow">›</span><span class="err">error: cannot assign to value: 'coffeeCount' is a 'let' constant</span>`;
+      } else {
+        console_.innerHTML = `<span class="arrow">›</span><span class="ok">coffeeCount = ${val.replace(/</g,"&lt;")}</span>`;
+      }
+    });
+  },
+
+  types(){
+    document.getElementById("types-run").addEventListener("click", ()=>{
+      const raw = document.getElementById("types-input").value.trim();
+      const console_ = document.getElementById("types-console");
+      let type = "String";
+      if(raw === "") { type = "—"; }
+      else if(/^"(.*)"$/.test(raw)) type = "String";
+      else if(/^(true|false)$/.test(raw)) type = "Bool";
+      else if(/^-?\d+$/.test(raw)) type = "Int";
+      else if(/^-?\d+\.\d+$/.test(raw)) type = "Double";
+      else type = "String";
+      console_.innerHTML = `<span class="arrow">›</span><span class="ok">${type}</span>`;
+    });
+  },
+
+  optionals(){
+    let state = "value";
+    setSeg("opt-seg", v=>state=v);
+    document.getElementById("opt-run").addEventListener("click", ()=>{
+      const console_ = document.getElementById("opt-console");
+      if(state === "value"){
+        console_.innerHTML = `<span class="arrow">›</span><span class="ok">Your number is 42</span>`;
+      } else {
+        console_.innerHTML = `<span class="arrow">›</span><span class="err">No ticket yet</span>`;
+      }
+    });
+  },
+
+  ifswitch(){
+    const range = document.getElementById("ifswitch-range");
+    const update = ()=>{
+      const score = parseInt(range.value, 10);
+      document.getElementById("ifswitch-scorelabel").textContent = `Score: ${score}`;
+      let band, grade;
+      if(score >= 90){ band="90-100"; grade="A"; }
+      else if(score >= 80){ band="80-89"; grade="B"; }
+      else if(score >= 70){ band="70-79"; grade="C"; }
+      else { band="default"; grade="F"; }
+      document.querySelectorAll("#ifswitch-tape .cell").forEach(c=>{
+        c.classList.toggle("hit", c.dataset.band===band);
+      });
+      document.getElementById("ifswitch-console").innerHTML = `<span class="arrow">›</span><span class="ok">${grade}</span>`;
+    };
+    range.addEventListener("input", update);
+    update();
+  },
+
+  loops(){
+    document.getElementById("loops-run").addEventListener("click", ()=>{
+      const from = parseInt(document.getElementById("loops-from").value,10);
+      const to = parseInt(document.getElementById("loops-to").value,10);
+      const tape = document.getElementById("loops-tape");
+      const console_ = document.getElementById("loops-console");
+      tape.innerHTML = "";
+      console_.innerHTML = `<span class="arrow">›</span><span class="info">running…</span>`;
+      if(isNaN(from) || isNaN(to) || from > to || (to-from) > 30){
+        console_.innerHTML = `<span class="arrow">›</span><span class="err">pick a valid, reasonably small range</span>`;
+        return;
+      }
+      const cells = [];
+      for(let i=from;i<=to;i++){
+        const c = document.createElement("div");
+        c.className = "cell";
+        c.textContent = `Rep ${i}`;
+        tape.appendChild(c);
+        cells.push(c);
+      }
+      let i = 0;
+      const timer = setInterval(()=>{
+        if(i>0) cells[i-1].classList.remove("hit");
+        if(i>=cells.length){ clearInterval(timer); console_.innerHTML = `<span class="arrow">›</span><span class="ok">loop finished — ${cells.length} reps</span>`; return; }
+        cells[i].classList.add("hit");
+        console_.innerHTML = `<span class="arrow">›</span><span class="ok">Rep ${from+i}</span>`;
+        i++;
+      }, 380);
+    });
+  },
+
+  functions(){
+    let excited = "true";
+    setSeg("fn-seg", v=>excited=v);
+    document.getElementById("fn-run").addEventListener("click", ()=>{
+      const name = (document.getElementById("fn-name").value || "friend").replace(/</g,"&lt;");
+      const console_ = document.getElementById("fn-console");
+      const result = excited === "true" ? `HEY ${name}!!` : `Hello, ${name}.`;
+      console_.innerHTML = `<span class="arrow">›</span><span class="ok">"${result}"</span>`;
+    });
+  },
+
+  closures(){
+    let mode = "double";
+    const recompute = ()=>{
+      const nums = [1,2,3,4];
+      let out;
+      if(mode==="double") out = nums.map(n=>n*2);
+      else if(mode==="square") out = nums.map(n=>n*n);
+      else out = nums.map(n=>n+10);
+      document.getElementById("cl-console").innerHTML = `<span class="arrow">›</span><span class="ok">[${out.join(", ")}]</span>`;
+    };
+    setSeg("cl-seg", v=>{ mode=v; recompute(); });
+    recompute();
+  },
+
+  closurescapture(){
+    let queue = [];
+    const tape = document.getElementById("cc-tape");
+    const console_ = document.getElementById("cc-console");
+    const renderTape = ()=>{
+      tape.innerHTML = "";
+      queue.forEach((m,i)=>{
+        const c = document.createElement("div");
+        c.className = "cell";
+        c.textContent = `[${i}] "${m}"`;
+        tape.appendChild(c);
+      });
+    };
+    document.getElementById("cc-store").addEventListener("click", ()=>{
+      const msg = (document.getElementById("cc-msg").value || "task").replace(/</g,"&lt;");
+      queue.push(msg);
+      renderTape();
+      console_.innerHTML = `<span class="arrow">›</span><span class="info">captured "${msg}" — function that called onFinish has already returned</span>`;
+    });
+    document.getElementById("cc-run").addEventListener("click", ()=>{
+      if(queue.length === 0){
+        console_.innerHTML = `<span class="arrow">›</span><span class="info">queue is empty — store something first</span>`;
+        return;
+      }
+      const ran = queue.slice();
+      queue = [];
+      renderTape();
+      console_.innerHTML = `<span class="arrow">›</span><span class="ok">ran ${ran.length} stored closure(s): ${ran.map(m=>'"'+m+'"').join(", ")}</span>`;
+    });
+  },
+
+  arrays(){
+    let arr = ["apple","pear"];
+    const tape = document.getElementById("arr-tape");
+    const console_ = document.getElementById("arr-console");
+    const render = (msg)=>{
+      tape.innerHTML = "";
+      arr.forEach((v,i)=>{
+        const c = document.createElement("div");
+        c.className = "cell";
+        c.textContent = `[${i}] ${v}`;
+        tape.appendChild(c);
+      });
+      console_.innerHTML = `<span class="arrow">›</span>${msg || `<span class="info">[${arr.map(v=>'"'+v+'"').join(", ")}]</span>`}`;
+    };
+    document.getElementById("arr-add").addEventListener("click", ()=>{
+      const v = document.getElementById("arr-val").value || "item";
+      arr.push(v);
+      render(`<span class="ok">appended "${v.replace(/</g,"&lt;")}"</span>`);
+    });
+    document.getElementById("arr-rm").addEventListener("click", ()=>{
+      const idx = parseInt(document.getElementById("arr-idx").value,10);
+      if(isNaN(idx) || idx<0 || idx>=arr.length){
+        render(`<span class="err">Fatal error: Index out of range</span>`);
+        return;
+      }
+      const removed = arr.splice(idx,1)[0];
+      render(`<span class="ok">removed "${removed}" from index ${idx}</span>`);
+    });
+    document.getElementById("arr-reset").addEventListener("click", ()=>{
+      arr = ["apple","pear"];
+      render();
+    });
+    render();
+  },
+
+  dicts(){
+    let map = {"Ada":36, "Grace":85};
+    const tape = document.getElementById("dict-tape");
+    const console_ = document.getElementById("dict-console");
+    const render = (msg)=>{
+      tape.innerHTML = "";
+      Object.keys(map).forEach(k=>{
+        const c = document.createElement("div");
+        c.className = "cell";
+        c.textContent = `"${k}": ${map[k]}`;
+        tape.appendChild(c);
+      });
+      if(msg) console_.innerHTML = `<span class="arrow">›</span>${msg}`;
+    };
+    document.getElementById("dict-set").addEventListener("click", ()=>{
+      const k = document.getElementById("dict-key").value.trim();
+      const v = parseInt(document.getElementById("dict-val").value,10);
+      if(!k || isNaN(v)) return;
+      map[k] = v;
+      render(`<span class="ok">ages["${k}"] = ${v}</span>`);
+    });
+    document.getElementById("dict-get").addEventListener("click", ()=>{
+      const k = document.getElementById("dict-lookup").value.trim();
+      if(Object.prototype.hasOwnProperty.call(map,k)){
+        render(`<span class="ok">.some(${map[k]})</span> <span class="pill mint">Int?</span>`);
+      } else {
+        render(`<span class="err">nil</span> <span class="pill rose">key not found</span>`);
+      }
+    });
+    render();
+  },
+
+  structclass(){
+    let kind = "struct";
+    let a = 0, b = 0;
+    const render = (msg)=>{
+      document.getElementById("sc-a").textContent = a;
+      document.getElementById("sc-b").textContent = b;
+      if(msg) document.getElementById("sc-console").innerHTML = `<span class="arrow">›</span>${msg}`;
+    };
+    setSeg("sc-seg", v=>{
+      kind = v; a=0; b=0;
+      render(`<span class="info">${kind==="struct" ? "var a = Point(); var b = a   // b is a copy" : "let a = Counter(); let b = a   // b references the same object"}</span>`);
+    });
+    document.getElementById("sc-run").addEventListener("click", ()=>{
+      const val = parseInt(document.getElementById("sc-val").value,10) || 0;
+      b = val;
+      if(kind === "class") a = val;
+      render(`<span class="ok">b.x = ${val}</span>${kind==="class" ? ' <span class="pill rose">a.x changed too — same reference</span>' : ' <span class="pill mint">a.x untouched — separate copy</span>'}`);
+    });
+    document.getElementById("sc-reset").addEventListener("click", ()=>{
+      a=0;b=0; render(`<span class="info">reset</span>`);
+    });
+    render();
+  },
+
+  protocols(){
+    let type = "Car";
+    const sounds = { Car:"Beep!", Goose:"HONK.", Bicycle:"*ring ring*" };
+    setSeg("proto-seg", v=>type=v);
+    document.getElementById("proto-run").addEventListener("click", ()=>{
+      document.getElementById("proto-console").innerHTML = `<span class="arrow">›</span><span class="ok">"${sounds[type]}"</span> <span class="pill mint">${type}: Honkable</span>`;
+    });
+  },
+
+  enumbasics(){
+    const arrows = { north:"↑", south:"↓", east:"→", west:"←" };
+    setSeg("enum-seg", v=>{
+      document.getElementById("enum-console").innerHTML = `<span class="ok">${arrows[v]}</span>`;
+    });
+  },
+
+  asyncawait(){
+    let mode = "fast";
+    setSeg("aa-seg", v=>mode=v);
+    document.getElementById("aa-run").addEventListener("click", ()=>{
+      const console_ = document.getElementById("aa-console");
+      const btn = document.getElementById("aa-run");
+      btn.disabled = true;
+      console_.innerHTML = `<span class="arrow">›</span><span class="info">suspended at await… (thread is free)</span>`;
+      const delay = mode==="slow" ? 1600 : 400;
+      setTimeout(()=>{
+        btn.disabled = false;
+        if(mode==="fail"){
+          console_.innerHTML = `<span class="arrow">›</span><span class="err">error: URLError(.notConnectedToInternet)</span>`;
+        } else {
+          console_.innerHTML = `<span class="arrow">›</span><span class="ok">resumed → Profile(name: "Ada")</span>`;
+        }
+      }, delay);
+    });
+  },
+
+  actors(){
+    let kind = "class";
+    setSeg("actor-seg", v=>kind=v);
+    document.getElementById("actor-run").addEventListener("click", ()=>{
+      const console_ = document.getElementById("actor-console");
+      const balEl = document.getElementById("actor-bal");
+      balEl.textContent = "0";
+      console_.innerHTML = `<span class="arrow">›</span><span class="info">firing 10 concurrent deposits…</span>`;
+      let balance = 0;
+      const lostWrites = kind === "class";
+      let pending = 10;
+      for(let i=0;i<10;i++){
+        const delay = 50 + Math.random()*150;
+        setTimeout(()=>{
+          if(lostWrites && Math.random() < 0.35){
+            // simulate a read-modify-write race: this increment gets clobbered
+          } else {
+            balance++;
+          }
+          balEl.textContent = balance;
+          pending--;
+          if(pending===0){
+            if(balance === 10){
+              console_.innerHTML = `<span class="arrow">›</span><span class="ok">balance = 10 — every deposit landed</span>`;
+            } else {
+              console_.innerHTML = `<span class="arrow">›</span><span class="err">balance = ${balance} — ${10-balance} deposit(s) lost to a race</span>`;
+            }
+          }
+        }, delay);
+      }
+    });
+  },
+
+  pubsub(){
+    document.getElementById("ps-run").addEventListener("click", ()=>{
+      const val = document.getElementById("ps-val").value || "0";
+      document.getElementById("ps-console").innerHTML = `<span class="arrow">›</span><span class="ok">Price is now ${val.replace(/</g,"&lt;")}</span>`;
+    });
+  },
+
+  operators(){
+    let mode = "double";
+    setSeg("op-seg", v=>mode=v);
+    document.getElementById("op-run").addEventListener("click", ()=>{
+      const n = parseInt(document.getElementById("op-val").value,10);
+      const console_ = document.getElementById("op-console");
+      if(isNaN(n)){ console_.innerHTML = `<span class="arrow">›</span><span class="err">enter a number</span>`; return; }
+      if(mode === "double"){
+        console_.innerHTML = `<span class="arrow">›</span><span class="ok">sink received ${n*2}</span>`;
+      } else if(mode === "even"){
+        console_.innerHTML = n%2===0
+          ? `<span class="arrow">›</span><span class="ok">sink received ${n}</span>`
+          : `<span class="arrow">›</span><span class="err">dropped by filter — sink never sees ${n}</span>`;
+      } else {
+        console_.innerHTML = n%2===0
+          ? `<span class="arrow">›</span><span class="ok">sink received ${n*2}</span>`
+          : `<span class="arrow">›</span><span class="err">dropped by filter — sink never sees ${n}</span>`;
+      }
+    });
+  },
+
+  datamodel(){
+    const books = [
+      {title:"Dune", isRead:false, pageCount:412},
+      {title:"Educated", isRead:true, pageCount:334},
+      {title:"Project Hail Mary", isRead:false, pageCount:496},
+      {title:"The Hobbit", isRead:true, pageCount:310},
+      {title:"Atomic Habits", isRead:false, pageCount:256},
+    ];
+    const tape = document.getElementById("dm-tape");
+    const console_ = document.getElementById("dm-console");
+    const render = (mode)=>{
+      let filtered = books;
+      if(mode === "unread") filtered = books.filter(b=>!b.isRead);
+      if(mode === "short") filtered = books.filter(b=>b.pageCount < 300);
+      tape.innerHTML = "";
+      filtered.forEach(b=>{
+        const c = document.createElement("div");
+        c.className = "cell";
+        c.textContent = b.title;
+        tape.appendChild(c);
+      });
+      console_.innerHTML = `<span class="arrow">›</span><span class="ok">${filtered.length} result${filtered.length===1?"":"s"}</span>`;
+    };
+    setSeg("dm-seg", render);
+    render("all");
+  },
+
+  savingrels(){
+    let dirty = false;
+    let saved = 0;
+    const render = (msg)=>{
+      document.getElementById("sr-state").textContent = dirty ? "dirty" : "clean";
+      document.getElementById("sr-state").style.color = dirty ? "var(--rose)" : "var(--mint)";
+      document.getElementById("sr-count").textContent = saved;
+      if(msg) document.getElementById("sr-console").innerHTML = `<span class="arrow">›</span>${msg}`;
+    };
+    document.getElementById("sr-insert").addEventListener("click", ()=>{
+      const title = (document.getElementById("sr-title").value || "Untitled").replace(/</g,"&lt;");
+      dirty = true;
+      render(`<span class="info">Book(context:) inserted "${title}" — not yet saved</span>`);
+    });
+    document.getElementById("sr-save").addEventListener("click", ()=>{
+      if(!dirty){ render(`<span class="info">context.hasChanges == false — nothing to save</span>`); return; }
+      saved++; dirty = false;
+      render(`<span class="ok">context.save() — row persisted to disk</span>`);
+    });
+    render();
+  },
+
+  mvcvsmvvm(){
+    setSeg("mvc-seg", v=>{
+      if(v==="mvc"){
+        document.getElementById("mvc-vc").textContent = "formats price itself";
+        document.getElementById("mvc-vm").textContent = "—";
+        document.getElementById("mvc-console").innerHTML = `<span class="arrow">›</span><span class="info">label.text = "$" + String(format: "%.2f", price)</span>`;
+      } else {
+        document.getElementById("mvc-vc").textContent = "label.text = viewModel.formattedPrice";
+        document.getElementById("mvc-vm").textContent = "formattedPrice: String { ... }";
+        document.getElementById("mvc-console").innerHTML = `<span class="arrow">›</span><span class="ok">viewModel.formattedPrice == "$12.50"</span>`;
+      }
+    });
+  },
+
+  mvvmpractice(){
+    const input = document.getElementById("mvvmp-input");
+    const update = ()=>{
+      const v = input.value;
+      const valid = v.length >= 3;
+      document.getElementById("mvvmp-console").innerHTML = `<span class="arrow">›</span>${valid ? '<span class="ok">✓ available</span>' : '<span class="err">too short</span>'}`;
+    };
+    input.addEventListener("input", update);
+    update();
+  },
+
+  solid(){
+    const text = {
+      S: `<b>Single Responsibility</b> — does this type have only one reason to change? <code class="inline">Invoice</code> formatting, saving, and validating are three separate reasons.`,
+      O: `<b>Open/Closed</b> — can you add new behavior without editing existing code? A new <code class="inline">DiscountStrategy</code> conformer shouldn't require touching the checkout code.`,
+      L: `<b>Liskov Substitution</b> — can a subtype stand in for its supertype with no surprises? A <code class="inline">Square</code> that throws when you set width ≠ height breaks this.`,
+      I: `<b>Interface Segregation</b> — are protocols small and specific, or one bloated protocol forcing types to implement methods they don't need?`,
+      D: `<b>Dependency Inversion</b> — does your code depend on a protocol, or on a concrete <code class="inline">URLSession</code>? Depending on the abstraction is what makes mocking in tests possible.`,
+    };
+    setSeg("solid-seg", v=>{
+      document.getElementById("solid-console").innerHTML = text[v];
+    });
+    document.getElementById("solid-console").innerHTML = text.S;
+  },
+
+  pod(){
+    let type = "Receipt";
+    const summaries = { Receipt:"a Describable thing", Invoice:"Invoice #4821", Ticket:"a Describable thing" };
+    const overridden = { Receipt:false, Invoice:true, Ticket:false };
+    setSeg("pod-seg", v=>type=v);
+    document.getElementById("pod-run").addEventListener("click", ()=>{
+      const tag = overridden[type] ? '<span class="pill rose">overrides default</span>' : '<span class="pill mint">uses extension default</span>';
+      document.getElementById("pod-console").innerHTML = `<span class="arrow">›</span><span class="ok">"${summaries[type]}"</span> ${tag}`;
+    });
+  },
+
+  singletonfactory(){
+    let count = 0;
+    document.getElementById("sf-shared").addEventListener("click", ()=>{
+      count++;
+      document.getElementById("sf-count").textContent = count;
+      document.getElementById("sf-console").innerHTML = `<span class="arrow">›</span><span class="ok">same instance every time — eventCount = ${count}</span>`;
+    });
+    let vehicle = "car";
+    setSeg("sf-seg", v=>{
+      vehicle = v;
+      const made = v === "car" ? "Car()" : "Bicycle()";
+      document.getElementById("sf-console").innerHTML = `<span class="arrow">›</span><span class="ok">VehicleFactory.make("${v}") → ${made}</span>`;
+    });
+  },
+
+  observerdelegate(){
+    let mode = "delegate";
+    setSeg("od-seg", v=>mode=v);
+    document.getElementById("od-run").addEventListener("click", ()=>{
+      const console_ = document.getElementById("od-console");
+      if(mode === "delegate"){
+        console_.innerHTML = `<span class="arrow">›</span><span class="ok">delegate.downloadDidFinish("ok") — 1 listener notified</span>`;
+      } else {
+        console_.innerHTML = `<span class="arrow">›</span><span class="ok">NotificationCenter.post(.downloadFinished) — 3 listeners notified</span>`;
+      }
+    });
+  },
+
+  arc(){
+    let weakTenant = true;
+    setSeg("arc-seg", v=>weakTenant = v==="weak");
+    const reset = ()=>{
+      document.getElementById("arc-person").textContent = "alive (refs: 1)";
+      document.getElementById("arc-person").style.color = "var(--text)";
+      document.getElementById("arc-apt").textContent = "alive (refs: 1)";
+      document.getElementById("arc-apt").style.color = "var(--text)";
+      document.getElementById("arc-console").innerHTML = `<span class="arrow">›</span><span class="info">press run</span>`;
+    };
+    document.getElementById("arc-run").addEventListener("click", ()=>{
+      const personEl = document.getElementById("arc-person");
+      const aptEl = document.getElementById("arc-apt");
+      if(weakTenant){
+        personEl.textContent = "deallocated (refs: 0)";
+        personEl.style.color = "var(--mint)";
+        aptEl.textContent = "deallocated (refs: 0)";
+        aptEl.style.color = "var(--mint)";
+        document.getElementById("arc-console").innerHTML = `<span class="arrow">›</span><span class="ok">both refcounts hit 0 — both deallocated</span>`;
+      } else {
+        personEl.textContent = "leaked (refs: 1, held by Apartment)";
+        personEl.style.color = "var(--rose)";
+        aptEl.textContent = "leaked (refs: 1, held by Person)";
+        aptEl.style.color = "var(--rose)";
+        document.getElementById("arc-console").innerHTML = `<span class="arrow">›</span><span class="err">strong reference cycle — neither refcount reaches 0</span>`;
+      }
+    });
+    document.getElementById("arc-reset").addEventListener("click", reset);
+    reset();
+  },
+
+  errorhandling(){
+    let form = "try";
+    setSeg("eh-seg", v=>form=v);
+    document.getElementById("eh-run").addEventListener("click", ()=>{
+      const raw = document.getElementById("eh-input").value;
+      const console_ = document.getElementById("eh-console");
+      let error = null;
+      if(raw === "") error = "ParseError.empty";
+      else if(isNaN(parseInt(raw,10)) || !/^-?\d+$/.test(raw)) error = "ParseError.malformed";
+      if(form === "try"){
+        console_.innerHTML = error
+          ? `<span class="arrow">›</span><span class="err">catch ${error}</span> <span class="pill rose">must be wrapped in do/catch</span>`
+          : `<span class="arrow">›</span><span class="ok">${parseInt(raw,10)}</span>`;
+      } else if(form === "tryq"){
+        console_.innerHTML = error
+          ? `<span class="arrow">›</span><span class="info">nil</span> <span class="pill mint">error discarded</span>`
+          : `<span class="arrow">›</span><span class="ok">Optional(${parseInt(raw,10)})</span>`;
+      } else {
+        console_.innerHTML = error
+          ? `<span class="arrow">›</span><span class="err">Fatal error: 'try!' expression unexpectedly raised an error — ${error}</span>`
+          : `<span class="arrow">›</span><span class="ok">${parseInt(raw,10)}</span>`;
+      }
+    });
+  },
+
+  generics(){
+    let coll = "ints";
+    setSeg("gen-seg", v=>coll=v);
+    document.getElementById("gen-run").addEventListener("click", ()=>{
+      const target = document.getElementById("gen-target").value.trim();
+      const console_ = document.getElementById("gen-console");
+      if(coll === "ints"){
+        const items = [1,2,3,4];
+        const t = parseInt(target,10);
+        const found = !isNaN(t) && items.includes(t);
+        console_.innerHTML = found
+          ? `<span class="arrow">›</span><span class="ok">Optional(${t})</span> <span class="pill mint">T == Int</span>`
+          : `<span class="arrow">›</span><span class="info">nil</span> <span class="pill mint">T == Int</span>`;
+      } else {
+        const items = ["fig","pear","kiwi"];
+        const found = items.includes(target);
+        console_.innerHTML = found
+          ? `<span class="arrow">›</span><span class="ok">Optional("${target}")</span> <span class="pill mint">T == String</span>`
+          : `<span class="arrow">›</span><span class="info">nil</span> <span class="pill mint">T == String</span>`;
+      }
+    });
+  },
+
+  extensionsaccess(){
+    let level = "fileprivate";
+    let caller = "same";
+    setSeg("ea-seg", v=>level=v);
+    setSeg("ea-caller", v=>caller=v);
+    const update = ()=>{
+      const console_ = document.getElementById("ea-console");
+      const blocked = level === "fileprivate" && caller === "other";
+      console_.innerHTML = blocked
+        ? `<span class="arrow">›</span><span class="err">error: 'slugified' is inaccessible due to 'fileprivate' protection level</span>`
+        : `<span class="arrow">›</span><span class="ok">"hello-world"</span>`;
+    };
+    document.querySelectorAll("#ea-seg button, #ea-caller button").forEach(b=>b.addEventListener("click", update));
+    update();
+  },
+
+  opsio(){
+    let hasValue = "value";
+    let strat = "force";
+    setSeg("opsio-seg", v=>hasValue=v);
+    setSeg("opsio-strat", v=>strat=v);
+    const buttons = document.querySelectorAll("#opsio-seg button, #opsio-strat button");
+    const update = ()=>{
+      const console_ = document.getElementById("opsio-console");
+      const isNil = hasValue === "nil";
+      if(strat === "force"){
+        console_.innerHTML = isNil
+          ? `<span class="arrow">›</span><span class="err">Fatal error: Unexpectedly found nil while unwrapping an Optional value</span>`
+          : `<span class="arrow">›</span><span class="ok">"Ada"</span>`;
+      } else if(strat === "guard"){
+        console_.innerHTML = isNil
+          ? `<span class="arrow">›</span><span class="err">guard fails → return (function exits early, no crash)</span>`
+          : `<span class="arrow">›</span><span class="ok">n == "Ada" — continues past the guard</span>`;
+      } else if(strat === "coalesce"){
+        console_.innerHTML = isNil
+          ? `<span class="arrow">›</span><span class="ok">"Hi, stranger"</span>`
+          : `<span class="arrow">›</span><span class="ok">"Hi, Ada"</span>`;
+      } else {
+        console_.innerHTML = isNil
+          ? `<span class="arrow">›</span><span class="info">nil</span> <span class="pill mint">short-circuited, no crash</span>`
+          : `<span class="arrow">›</span><span class="ok">Optional("ADA")</span>`;
+      }
+    };
+    buttons.forEach(b=>b.addEventListener("click", update));
+    update();
+  },
+
+  guardternary(){
+    document.getElementById("gt-run").addEventListener("click", ()=>{
+      const tape = document.getElementById("gt-tape");
+      const console_ = document.getElementById("gt-console");
+      tape.innerHTML = "";
+      let total = 0;
+      for(let n=1;n<=10;n++){
+        const c = document.createElement("div");
+        c.className = "cell";
+        if(n === 5){
+          c.textContent = `${n} (continue)`;
+          tape.appendChild(c);
+          continue;
+        }
+        if(n === 8){
+          c.textContent = `${n} (break)`;
+          c.classList.add("hit");
+          tape.appendChild(c);
+          break;
+        }
+        c.textContent = String(n);
+        c.classList.add("hit");
+        tape.appendChild(c);
+        total += n;
+      }
+      console_.innerHTML = `<span class="arrow">›</span><span class="ok">total = ${total}</span>`;
+    });
+  },
+
+  paramshof(){
+    document.getElementById("hof-run").addEventListener("click", ()=>{
+      const input = document.getElementById("hof-score");
+      const n = parseInt(input.value,10) || 0;
+      const doubled = n * 2;
+      input.value = doubled;
+      document.getElementById("hof-console").innerHTML = `<span class="arrow">›</span><span class="ok">score = ${doubled}</span>`;
+    });
+  },
+
+  sets(){
+    const tags = ["swift","ios"];
+    const popular = ["swift","kotlin"];
+    let op = "contains";
+    setSeg("sets-seg", v=>op=v);
+    document.querySelectorAll("#sets-seg button").forEach(b=>{
+      b.addEventListener("click", ()=>{
+        const console_ = document.getElementById("sets-console");
+        if(op === "contains"){
+          console_.innerHTML = `<span class="arrow">›</span><span class="ok">true</span>`;
+        } else if(op === "intersection"){
+          const result = tags.filter(t=>popular.includes(t));
+          console_.innerHTML = `<span class="arrow">›</span><span class="ok">{${result.map(s=>'"'+s+'"').join(", ")}}</span>`;
+        } else {
+          const result = [...new Set([...tags, ...popular])];
+          console_.innerHTML = `<span class="arrow">›</span><span class="ok">{${result.map(s=>'"'+s+'"').join(", ")}}</span>`;
+        }
+      });
+    });
+  },
+
+  propsmethods(){
+    document.getElementById("pm-run").addEventListener("click", ()=>{
+      const w = parseFloat(document.getElementById("pm-w").value) || 0;
+      const h = parseFloat(document.getElementById("pm-h").value) || 0;
+      document.getElementById("pm-console").innerHTML = `<span class="arrow">›</span><span class="ok">area = ${(w*h).toFixed(1)}</span>`;
+    });
+  },
+
+  enumadvanced(){
+    setSeg("ea2-seg", v=>{
+      const console_ = document.getElementById("ea2-console");
+      console_.innerHTML = v === "success"
+        ? `<span class="arrow">›</span><span class="ok">Loaded!</span>`
+        : `<span class="arrow">›</span><span class="err">404: Not Found</span>`;
+    });
+  },
+
+  taskgroups(){
+    document.getElementById("tg-run").addEventListener("click", ()=>{
+      const tape = document.getElementById("tg-tape");
+      const console_ = document.getElementById("tg-console");
+      tape.innerHTML = "";
+      console_.innerHTML = `<span class="arrow">›</span><span class="info">3 tasks started concurrently…</span>`;
+      const cells = [1,2,3].map(i=>{
+        const c = document.createElement("div");
+        c.className = "cell";
+        c.textContent = `task ${i}: pending`;
+        tape.appendChild(c);
+        return c;
+      });
+      const order = [0,1,2].sort(()=>Math.random()-0.5);
+      let done = 0;
+      order.forEach((idx, j)=>{
+        setTimeout(()=>{
+          cells[idx].textContent = `task ${idx+1}: done`;
+          cells[idx].classList.add("hit");
+          done++;
+          if(done === 3){
+            console_.innerHTML = `<span class="arrow">›</span><span class="ok">all 3 collected — order: ${order.map(o=>o+1).join(", ")}</span>`;
+          }
+        }, 200 + j*300 + Math.random()*200);
+      });
+    });
+  },
+
+  coordinatordi(){
+    let kind = "live";
+    setSeg("di-seg", v=>kind=v);
+    document.getElementById("di-run").addEventListener("click", ()=>{
+      const console_ = document.getElementById("di-console");
+      console_.innerHTML = kind === "live"
+        ? `<span class="arrow">›</span><span class="info">awaiting real network response…</span> <span class="pill rose">slow, non-deterministic</span>`
+        : `<span class="arrow">›</span><span class="ok">Profile(name: "Test User")</span> <span class="pill mint">instant, deterministic</span>`;
+    });
+  },
+
+  stringsdeep(){
+    const greeting = "Hello, Ada!";
+    const range = document.getElementById("sd-range");
+    const update = ()=>{
+      const offset = parseInt(range.value,10);
+      const console_ = document.getElementById("sd-console");
+      if(offset >= 0 && offset < greeting.length){
+        console_.innerHTML = `<span class="arrow">›</span><span class="ok">greeting[idx] == "${greeting[offset]}"</span>`;
+      } else {
+        console_.innerHTML = `<span class="arrow">›</span><span class="err">index out of bounds</span>`;
+      }
+    };
+    range.addEventListener("input", update);
+    update();
+  },
+
+  funcprog(){
+    const nums = [1,2,3,4,5];
+    let method = "map";
+    setSeg("fp-seg", v=>method=v);
+    document.querySelectorAll("#fp-seg button").forEach(b=>{
+      b.addEventListener("click", ()=>{
+        const console_ = document.getElementById("fp-console");
+        if(method === "map") console_.innerHTML = `<span class="arrow">›</span><span class="ok">[${nums.map(n=>n*2).join(", ")}]</span>`;
+        else if(method === "filter") console_.innerHTML = `<span class="arrow">›</span><span class="ok">[${nums.filter(n=>n%2===0).join(", ")}]</span>`;
+        else if(method === "reduce") console_.innerHTML = `<span class="arrow">›</span><span class="ok">${nums.reduce((a,b)=>a+b,0)}</span>`;
+        else if(method === "sorted") console_.innerHTML = `<span class="arrow">›</span><span class="ok">[${[...nums].sort((a,b)=>b-a).join(", ")}]</span>`;
+        else console_.innerHTML = `<span class="arrow">›</span><span class="ok">[1, 3]</span> <span class="pill mint">"two" dropped</span>`;
+      });
+    });
+  },
+
+  inheritance(){
+    let kind = "Animal";
+    setSeg("inh-seg", v=>kind=v);
+    document.getElementById("inh-run").addEventListener("click", ()=>{
+      document.getElementById("inh-console").innerHTML = kind === "Animal"
+        ? `<span class="arrow">›</span><span class="ok">"..."</span>`
+        : `<span class="arrow">›</span><span class="ok">"Woof!"</span> <span class="pill mint">overridden version ran</span>`;
+    });
+  },
+
+  propflow(){
+    document.getElementById("pf-run").addEventListener("click", ()=>{
+      const tape = document.getElementById("pf-tape");
+      tape.innerHTML = "";
+      const lines = ["start","work","cleanup — always runs"];
+      lines.forEach((l,i)=>{
+        setTimeout(()=>{
+          const c = document.createElement("div");
+          c.className = "cell hit";
+          c.textContent = l;
+          tape.appendChild(c);
+        }, i*350);
+      });
+    });
+  },
+
+  networking(){
+    const answers = {
+      pref: "UserDefaults — small, simple preferences",
+      token: "Keychain — secrets and tokens, never UserDefaults",
+      model: "SwiftData — structured, queryable @Model data",
+      file: "FileManager — raw files on disk",
+    };
+    setSeg("net-seg", v=>{
+      document.getElementById("net-console").innerHTML = `<span class="arrow">›</span><span class="ok">${answers[v]}</span>`;
+    });
+  },
+
+  testingspm(){
+    document.getElementById("ts-run").addEventListener("click", ()=>{
+      const d = parseInt(document.getElementById("ts-div").value,10);
+      const console_ = document.getElementById("ts-console");
+      console_.innerHTML = d === 0
+        ? `<span class="arrow">›</span><span class="ok">XCTAssertThrowsError passed — divide(1, by: 0) threw</span>`
+        : `<span class="arrow">›</span><span class="err">test failed — divide(1, by: ${d}) did not throw</span>`;
+    });
+  },
+
+  swiftuibasics(){
+    let count = 0;
+    const render = ()=>{
+      document.getElementById("su-console").innerHTML = `<span class="arrow">›</span><span class="ok">Text("Count: ${count}")</span>`;
+    };
+    document.getElementById("su-inc").addEventListener("click", ()=>{ count++; render(); });
+    document.getElementById("su-dec").addEventListener("click", ()=>{ count--; render(); });
+  },
+
+  advancedgrab(){
+    setSeg("ag-seg", v=>{
+      const console_ = document.getElementById("ag-console");
+      console_.innerHTML = v === "name"
+        ? `<span class="arrow">›</span><span class="ok">["Ada", "Grace"]</span>`
+        : `<span class="arrow">›</span><span class="ok">[3, 5]</span>`;
+    });
+  },
+
+  resultbuilderbasics(){
+    let lines = ["Name: Ada"];
+    const render = ()=>{
+      document.getElementById("rb-console").innerHTML = `<span class="arrow">›</span><span class="info">${lines.join("\n")}</span>`;
+    };
+    document.getElementById("rb-add").addEventListener("click", ()=>{
+      const v = (document.getElementById("rb-line").value || "").replace(/</g,"&lt;");
+      if(v) lines.push(v);
+      render();
+    });
+    document.getElementById("rb-reset").addEventListener("click", ()=>{
+      lines = ["Name: Ada"];
+      render();
+    });
+    render();
+  },
+
+  performancebasics(){
+    let shared = true;
+    const render = (msg)=>{
+      document.getElementById("cow-buffers").textContent = shared ? "1 buffer, shared by a & b" : "2 buffers — copy occurred";
+      document.getElementById("cow-vals").textContent = shared ? "[1,2,3] / [1,2,3]" : "[1,2,3] / [1,2,3,4]";
+      if(msg) document.getElementById("cow-console").innerHTML = `<span class="arrow">›</span>${msg}`;
+    };
+    document.getElementById("cow-assign").addEventListener("click", ()=>{
+      shared = true;
+      render(`<span class="info">var b = a — refcount bumped, no copy yet</span>`);
+    });
+    document.getElementById("cow-mutate").addEventListener("click", ()=>{
+      if(!shared){ render(`<span class="info">already copied — mutating further is free</span>`); return; }
+      shared = false;
+      render(`<span class="ok">b.append(4) — refcount was &gt; 1, so the buffer was copied first</span>`);
+    });
+    document.getElementById("cow-reset").addEventListener("click", ()=>{
+      shared = true;
+      render(`<span class="info">reset</span>`);
+    });
+    render();
+  },
+};
+
+/* ======================= INIT ======================= */
+selectLesson("basics","vars");
+</script>
+</body>
+</html>
